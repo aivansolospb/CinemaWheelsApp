@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Отчёт водителя</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    /* *** НАЧАЛО: Полностью переписанные стили для нативного вида *** */
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #ffffff);
+      --text-color: var(--tg-theme-text-color, #000000);
+      --button-color: var(--tg-theme-button-color, #007bff);
+      --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+      --secondary-bg-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      --hint-color: var(--tg-theme-hint-color, #999999);
+      /* Добавляем цвет разделителя из палитры Telegram */
+      --separator-color: var(--tg-theme-separator-color, #e0e0e0);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Убираем подсветку при тапе */
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      /* Используем 'safe-area-inset' для отступов на iOS */
+      padding: 16px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      padding-left: calc(16px + env(safe-area-inset-left));
+      padding-right: calc(16px + env(safe-area-inset-right));
+      /* Добавляем отступ снизу, чтобы контент не прилипал к краю */
+      padding-bottom: calc(32px + env(safe-area-inset-bottom)); 
+    }
+
+    h2, h3 { 
+      color: var(--text-color); 
+      margin-top: 0;
+    }
+    h2 { margin-bottom: 8px; }
+    
+    #driverNameDisplay {
+      color: var(--hint-color);
+      font-weight: 500;
+      font-size: 1.1em;
+      margin-top: -5px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 12px;
+      margin-top: 4px;
+      border-radius: 8px;
+      /* Граница цвета разделителя, фон - вторичный */
+      border: 1px solid var(--separator-color);
+      background-color: var(--secondary-bg-color);
+      color: var(--text-color);
+      box-sizing: border-box; 
+      font-size: 1em;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      /* Плавный переход для фокуса */
+      transition: border-color 0.2s ease;
+      -webkit-appearance: none; /* Убираем стандартный вид <select> на iOS */
+    }
+
+    /* Нативный фокус */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--button-color);
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--hint-color); }
+
+    /* Стили для <select>, чтобы он не выглядел чужеродно */
+    select {
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23${(p=>p.substring(1))(getComputedStyle(document.documentElement).getPropertyValue('--hint-color').trim() || '#999999')}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 1.2em;
+      padding-right: 36px; /* Место для стрелки */
+    }
+
+    button {
+      width: 100%;
+      padding: 14px 12px;
+      margin-top: 8px;
+      border-radius: 10px; /* Чуть более скругленные кнопки */
+      border: none;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      /* Плавный переход для нажатия */
+      transition: opacity 0.15s ease;
+    }
+    
+    /* Эффект нажатия */
+    button:active {
+      opacity: 0.85;
+    }
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* Главная кнопка */
+    button[type="submit"] {
+      background-color: var(--button-color);
+      color: var(--button-text-color);
+      margin-top: 24px;
+    }
+
+    /* Вторичная кнопка (бывший toggle-btn) */
+    button.toggle-btn {
+      background-color: var(--secondary-bg-color);
+      color: var(--button-color); /* Текст в цвет главной кнопки */
+      margin-top: 15px;
+      font-weight: 500;
+    }
+
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+
+    hr { 
+      border: 0; 
+      /* Нативный разделитель */
+      border-top: 1px solid var(--separator-color); 
+      margin: 24px 0; 
+    }
+
+    /* Модальное окно */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4); /* Чуть мягче фон */
+      display: none; 
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+      z-index: 1000;
+      /* Анимация появления */
+      animation: modal-fade-in 0.2s ease-out;
+    }
+    .modal-content {
+      background: var(--bg-color);
+      padding: 20px;
+      border-radius: 14px; /* Более скругленное, как в Telegram */
+      width: 100%;
+      max-width: 480px;
+      /* Более плавная, "нативная" тень */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: modal-zoom-in 0.2s ease-out;
+    }
+
+    @keyframes modal-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes modal-zoom-in {
+      from { transform: scale(0.95); }
+      to { transform: scale(1); }
+    }
+
+    .preview {
+      white-space: pre-line;
+      background: var(--secondary-bg-color);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      max-height: 45vh;
+      overflow-y: auto;
+      border: 1px solid var(--separator-color);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Кнопки в модальном окне */
+    .modal-actions .btn-primary {
+      background-color: var(--button-color);
+      color: var(--button-text-color);
+    }
+    .modal-actions .btn-secondary {
+      background-color: var(--secondary-bg-color);
+      color: var(--text-color);
+    }
+    
+    /* Кнопка профиля */
+    .profile-btn {
+      /* Fixed, чтобы быть над контентом и учитывать safe-area */
+      position: fixed; 
+      top: 10px;
+      right: 16px;
+      /* Отступы от "челки" и края */
+      top: calc(10px + env(safe-area-inset-top));
+      right: calc(16px + env(safe-area-inset-right));
+      
+      width: 40px; 
+      height: 40px;
+      padding: 0;
+      margin: 0;
+      border-radius: 50%;
+      font-size: 1.2em;
+    S     background-color: var(--secondary-bg-color);
+      color: var(--text-color);
+      border: 1px solid var(--separator-color);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* *** КОНЕЦ: Обновленные стили *** */
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function() {
+      try {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        // Это корректно обрабатывает тему
+        if (tg.colorScheme === 'dark') {
+          document.documentElement.style.colorScheme = 'dark';
+        } else {
+          document.documentElement.style.colorScheme = 'light';
+        }
+        // Слушаем изменения темы в реальном времени
+        tg.onEvent('themeChanged', function() {
+          document.documentElement.style.colorScheme = tg.colorScheme;
+        });
+      } catch (e) {
+        console.error('Telegram WebApp script error', e);
+      }
+    })();
+  </script>
+</head>
+<body>
+    <button type="button" id="profileBtn" class="profile-btn">👤</button>
+
+  <h2>Отчёт о смене</h2>
+  <h3 id="driverNameDisplay"></h3>
+
+  <form id="reportForm" onsubmit="event.preventDefault(); preparePreview();">
+    <label>Дата</label>
+    <input type="date" id="date" required>
+
+    <label>Проект</label>
+    <input id="project" placeholder="Название проекта" required list="project-list" maxlength="50">
+    <datalist id="project-list">
+    </datalist>
+
+    <label>Техника</label>
+    <select id="techSelect" required></select>
+
+    <label>Место / Адрес</label>
+    <input id="address" placeholder="Где вы работали" required maxlength="100">
+
+    <label>Смена (Начало / Конец)</label>
+    <div class="row">
+      <input type="time" id="shiftStart" required>
+      <input type="time" id="shiftEnd" required>
+    </div>
+
+    <button type="button" id="addTrailerBtn" class="toggle-btn">+ Добавить прицеп</button>
+    <div id="trailerBlock" style="display:none;">
+      <hr>
+      <label>Прицеп</label>
+      <select id="trailerSelect"></select>
+      <button type="button" id="toggleTrailerTimeBtn" class="toggle-btn" style="margin-top: 10px;">
+        Время прицепа отличается от времени смены
+      </button>
+      <div id="trailerTimeInputs" style="display:none; margin-top: 10px;">
+        <label>Прицеп (Начало / Конец)</label>
+        <div class="row">
+          <input type="time" id="trailerStart">
+          <input type="time" id="trailerEnd">
+        </div>
+      </div>
+    </div>
+    <button type="button" id="addKmBtn" class="toggle-btn">+ Добавить перепробег</button>
+    <div id="kmBlock" style="display:none;">
+       <hr>
+       <label>Перепробег (км)</label>
+       <input type="number" id="km" min="0" step="1" value="0">
+    </div>
+
+    <button type="button" id="addCommentBtn" class="toggle-btn">+ Добавить комментарий</button>
+    <div id="commentBlock" style="display:none;">
+       <hr>
+       <label>Комментарий</label>
+       <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
+    </div>
+
+    <button type="submit">Показать превью</button>
+  </form>
+
+    <div id="modalPreview" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Превью отчёта</h3>
+      <div id="modalPreviewText" class="preview"></div>
+      <div class="modal-actions">
+        <button type="button" id="editBtn" class="btn-secondary">Редактировать</button>
+        <button type="button" id="sendBtn" class="btn-primary">Отправить отчет</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalProfile" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Профиль водителя</h3>
+      <label for="profileNameInput">Ваше ФИО</label>
+      <input type="text" id="profileNameInput" placeholder="Введите ваше ФИО">
+      <p style="font-size: 0.9em; color: var(--hint-color); margin-top: 8px;">
+        При изменении, имя будет обновлено во всех ваших прошлых отчетах.
+      </p>
+      <div class="modal-actions">
+        <button type="button" id="cancelNameBtn" class="btn-secondary">Отмена</button>
+        <button type="button" id="saveNameBtn" class="btn-primary">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    /* *** НАЧАЛО: ИЗМЕНЕННЫЙ JAVASCRIPT ***
+    */
+    
+    // --- НОВЫЙ БЛОК: URL вашего бэкенда из Apps Script ---
+    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx54b7wA7oE7xIZPYnXEzQeGwTmgGYCSVc2W2-HwOO0XOJJkSpe6U5D0PuU7Ng4zApfhw/exec';
+    
+    const tg = window.Telegram.WebApp;
+    tg.expand(); 
+    const DRAFT_KEY = 'reportDraft'; // Ключ для хранения черновика
+
+    // --- Функция сохранения черновика (без изменений) ---
+    function saveDraft() {
+      const draftData = {
+        date: document.getElementById('date').value,
+        project: document.getElementById('project').value,
+        tech: document.getElementById('techSelect').value,
+        address: document.getElementById('address').value,
+        shiftStart: document.getElementById('shiftStart').value,
+        shiftEnd: document.getElementById('shiftEnd').value,
+        
+        isTrailerVisible: document.getElementById('trailerBlock').style.display === 'block',
+        trailer: document.getElementById('trailerSelect').value,
+        isCustomTrailerTime: document.getElementById('trailerTimeInputs').style.display === 'block',
+        trailerStart: document.getElementById('trailerStart').value,
+        trailerEnd: document.getElementById('trailerEnd').value,
+        
+        isKmVisible: document.getElementById('kmBlock').style.display === 'block',
+        km: document.getElementById('km').value,
+        
+        isCommentVisible: document.getElementById('commentBlock').style.display === 'block',
+        comment: document.getElementById('comment').value
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+    }
+
+    // --- Функция загрузки черновика (без изменений) ---
+    function loadDraft() {
+      const savedDraft = localStorage.getItem(DRAFT_KEY);
+      if (savedDraft) {
+        try {
+          const draftData = JSON.parse(savedDraft);
+          
+          document.getElementById('date').value = draftData.date || new Date().toISOString().slice(0,10);
+          document.getElementById('project').value = draftData.project || '';
+          document.getElementById('techSelect').value = draftData.tech || '';
+          document.getElementById('address').value = draftData.address || '';
+          document.getElementById('shiftStart').value = draftData.shiftStart || '';
+          document.getElementById('shiftEnd').value = draftData.shiftEnd || '';
+          
+          if (draftData.isTrailerVisible) {
+            document.getElementById('trailerBlock').style.display = 'block';
+            document.getElementById('addTrailerBtn').style.display = 'none';
+            document.getElementById('trailerSelect').value = draftData.trailer || '';
+            if (draftData.isCustomTrailerTime) {
+              document.getElementById('trailerTimeInputs').style.display = 'block';
+              document.getElementById('toggleTrailerTimeBtn').style.display = 'none';
+              document.getElementById('trailerStart').value = draftData.trailerStart || '';
+              document.getElementById('trailerEnd').value = draftData.trailerEnd || '';
+            }
+          }
+          
+          if (draftData.isKmVisible) {
+            document.getElementById('kmBlock').style.display = 'block';
+            document.getElementById('addKmBtn').style.display = 'none';
+            document.getElementById('km').value = draftData.km || '0';
+          }
+
+          if (draftData.isCommentVisible) {
+            document.getElementById('commentBlock').style.display = 'block';
+            document.getElementById('addCommentBtn').style.display = 'none';
+            document.getElementById('comment').value = draftData.comment || '';
+          }
+          
+        } catch (e) {
+          console.error("Ошибка загрузки черновика:", e);
+          localStorage.removeItem(DRAFT_KEY); // Очистить сломанный черновик
+          document.getElementById('date').value = new Date().toISOString().slice(0,10);
+        }
+      } else {
+         document.getElementById('date').value = new Date().toISOString().slice(0,10);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      let driverName = localStorage.getItem('driverName');
+      if (!driverName) {
+        driverName = prompt('Пожалуйста, введите ваше ФИО (это нужно только один раз):', '');
+        if (driverName && driverName.trim()) {
+          driverName = driverName.trim();
+          localStorage.setItem('driverName', driverName);
+
+          // --- ИЗМЕНЕННЫЙ БЛОК: Уведомление о регистрации (fetch) ---
+          try {
+            const user = tg.initDataUnsafe?.user || tg.initData?.user || null;
+            const userInfo = {
+              driverName: driverName,
+              tgId: user ? (user.id || '') : '',
+              username: user ? (user.username || '') : ''
+            };
+            
+            const requestData = {
+              action: 'notifyOfNewUser',
+              payload: userInfo
+            };
+
+            fetch(WEBAPP_URL, {
+              method: 'POST',
+              body: JSON.stringify(requestData),
+              headers: { 'Content-Type': 'application/json' },
+              redirect: 'follow'
+            })
+            .then(response => response.json())
+            .then(resp => {
+              if (resp.status !== 'ok') {
+                 console.error('Не удалось отправить уведомление о регистрации:', resp.error);
+              }
+              // Успех - просто молчим
+            })
+            .catch(err => {
+              console.error('Не удалось отправить уведомление о регистрации:', err); 
+            });
+              
+          } catch (e) {
+            console.error('Ошибка подготовки данных для регистрации:', e);
+          }
+          // --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
+
+        } else {
+          alert('Имя обязательно для отчетов. Пожалуйста, перезагрузите форму и введите имя.');
+          tg.close();
+          return;
+        }
+      }
+      document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
+
+      // --- ИЗМЕНЕННЫЙ БЛОК: Загрузка списков (fetch) ---
+      fetch(`${WEBAPP_URL}?action=getReferenceLists`)
+        .then(response => response.json())
+        .then(data => {
+          populateLists(data);
+        })
+        .catch(err => {
+          console.error('Ошибка загрузки справочников:', err);
+          alert('Не удалось загрузить списки техники и прицепов.');
+        });
+      // --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
+
+      loadDraft(); 
+      loadProjectHistory();
+
+      // --- Блок сохранения черновика (без изменений) ---
+      const fieldsToWatch = ['date', 'project', 'techSelect', 'address', 'shiftStart', 'shiftEnd', 'trailerSelect', 'trailerStart', 'trailerEnd', 'km', 'comment'];
+      fieldsToWatch.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+          const eventType = (element.tagName === 'SELECT') ? 'change' : 'input'; 
+          element.addEventListener(eventType, saveDraft);
+        }
+      });
+      document.getElementById('addTrailerBtn').addEventListener('click', saveDraft);
+      document.getElementById('addKmBtn').addEventListener('click', saveDraft);
+      document.getElementById('addCommentBtn').addEventListener('click', saveDraft);
+      document.getElementById('toggleTrailerTimeBtn').addEventListener('click', saveDraft);
+
+      // --- Слушатели кнопок (без изменений) ---
+      document.getElementById('addTrailerBtn').addEventListener('click', () => {
+        document.getElementById('trailerBlock').style.display = 'block';
+        document.getElementById('addTrailerBtn').style.display = 'none';
+      });
+      document.getElementById('addKmBtn').addEventListener('click', () => {
+        document.getElementById('kmBlock').style.display = 'block';
+        document.getElementById('addKmBtn').style.display = 'none';
+      });
+      document.getElementById('addCommentBtn').addEventListener('click', () => {
+        document.getElementById('commentBlock').style.display = 'block';
+        document.getElementById('addCommentBtn').style.display = 'none';
+      });
+
+      document.getElementById('toggleTrailerTimeBtn').addEventListener('click', () => {
+        document.getElementById('trailerTimeInputs').style.display = 'block';
+        document.getElementById('toggleTrailerTimeBtn').style.display = 'none';
+        if (!document.getElementById('trailerStart').value) {
+            document.getElementById('trailerStart').value = document.getElementById('shiftStart').value;
+        }
+        if (!document.getElementById('trailerEnd').value) {
+            document.getElementById('trailerEnd').value = document.getElementById('shiftEnd').value;
+        }
+      });
+      
+      document.getElementById('editBtn').addEventListener('click', () => {
+        document.getElementById('modalPreview').style.display = 'none';
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('editBtn').disabled = false;
+        document.getElementById('sendBtn').innerText = 'Отправить отчет';
+      });
+      document.getElementById('sendBtn').addEventListener('click', sendReport);
+      
+      document.getElementById('profileBtn').addEventListener('click', () => {
+        document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
+        document.getElementById('modalProfile').style.display = 'flex';
+      });
+      
+      document.getElementById('cancelNameBtn').addEventListener('click', () => {
+        document.getElementById('modalProfile').style.display = 'none';
+        document.getElementById('saveNameBtn').disabled = false;
+        document.getElementById('cancelNameBtn').disabled = false;
+        document.getElementById('saveNameBtn').innerText = 'Сохранить';
+      });
+
+      document.getElementById('saveNameBtn').addEventListener('click', handleSaveName);
+ 
+    });
+
+    // --- Функции (без google.script.run) ---
+
+    function populateLists(data) {
+      const tSel = document.getElementById('techSelect');
+      const trSel = document.getElementById('trailerSelect');
+      tSel.innerHTML = '<option value="">— выберите технику —</option>';
+      (data.tech || []).forEach(x => { const o = document.createElement('option'); o.value = x; o.text = x; tSel.appendChild(o); });
+      trSel.innerHTML = '<option value="">— выберите прицеп —</option>';
+      (data.trailer || []).forEach(x => { const o = document.createElement('option'); o.value = x; o.text = x; trSel.appendChild(o); });
+      
+      loadDraft();
+    }
+
+    function calcOvertime(startTime, endTime) {
+      if (!startTime || !endTime) return '0:00';
+      const [sh, sm] = startTime.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      let start = sh*60 + sm;
+      let end = eh*60 + em;
+      if (end < start) end += 24*60;
+      const duration = end - start;
+      const rawOvertimeMinutes = Math.max(0, duration - 12*60);
+      const overtimeMinutes = Math.round(rawOvertimeMinutes / 15) * 15;
+      const h = Math.floor(overtimeMinutes / 60);
+      const m = overtimeMinutes % 60;
+      return `${h}:${m.toString().padStart(2,'0')}`;
+    }
+
+    function preparePreview() {
+      // ... (Эта функция без изменений)
+      const user = tg.initDataUnsafe?.user || tg.initData?.user || null;
+      const tgId = user ? (user.id || '') : ''; 
+      const driverName = localStorage.getItem('driverName') || 'Неизвестно'; 
+      const date = document.getElementById('date').value; 
+      
+      let formattedDate = date; 
+      try {
+        const parts = date.split('-'); 
+        const year = parts[0].slice(-2); 
+        const month = parts[1]; 
+        const day = parts[2]; 
+        formattedDate = `${day}.${month}.${year}`; 
+      } catch (e) {
+        formattedDate = date; 
+      }
+
+      const project = document.getElementById('project').value;
+      const tech = document.getElementById('techSelect').value;
+      const address = document.getElementById('address').value;
+      const shiftStart = document.getElementById('shiftStart').value;
+      const shiftEnd = document.getElementById('shiftEnd').value;
+      const isTrailerVisible = document.getElementById('trailerBlock').style.display === 'block';
+      const isKmVisible = document.getElementById('kmBlock').style.display === 'block';
+      const isCommentVisible = document.getElementById('commentBlock').style.display === 'block';
+      const comment = isCommentVisible ? document.getElementById('comment').value.trim() : '';
+      const trailer = isTrailerVisible ? document.getElementById('trailerSelect').value : '';
+      const km = isKmVisible ? (document.getElementById('km').value || 0) : 0;
+      const customTrailerTime = document.getElementById('trailerTimeInputs').style.display === 'block';
+      const trailerStart = (isTrailerVisible && customTrailerTime) 
+                          ? document.getElementById('trailerStart').value 
+                          : (isTrailerVisible ? shiftStart : ''); 
+      const trailerEnd = (isTrailerVisible && customTrailerTime) 
+                          ? document.getElementById('trailerEnd').value 
+                          : (isTrailerVisible ? shiftEnd : ''); 
+      if (isTrailerVisible && !trailer) {
+        alert('Вы добавили блок "Прицеп", но не выбрали прицеп из списка.');
+        return;
+      }
+      if (isTrailerVisible && customTrailerTime && (!trailerStart || !trailerEnd)) {
+        alert('Вы указали, что время прицепа отличается, но не заполнили поля "Начало / Конец" для него.');
+        return;
+      }
+      const overtime = calcOvertime(shiftStart, shiftEnd);
+      const trailerOvertime = (isTrailerVisible && trailer) ? calcOvertime(trailerStart, trailerEnd) : '0:00';
+      
+      const previewText = [
+        `🗓 ${formattedDate}`, 
+        `Водитель: ${driverName}`,
+        `Проект: ${project}`,
+        `Техника: ${tech || '-'}`,
+        trailer ? `Прицеп: ${trailer}` : `Прицеп: нет`,
+        `Адрес: ${address}`,
+        `Смена: ${shiftStart} — ${shiftEnd} (Переработка: ${overtime})`,
+        trailer ? `Смена прицепа: ${trailerStart} — ${trailerEnd} (Переработка: ${trailerOvertime})` : '',
+        (km > 0) ? `Перепробег: ${km} км` : `Перепробег: 0 км`,
+        (comment) ? `Комментарий: ${comment}` : ''
+      ].filter(Boolean).join('\n');
+      
+      window._REPORT = {
+        date: date, 
+        driverName, tgId, project, tech, 
+        trailer: trailer || 'Нет прицепа', address,
+        shiftStart, shiftEnd, overtime, 
+        trailerStart: trailerStart || '', trailerEnd: trailerEnd || '', trailerOvertime,
+        km,
+        comment: comment || ''
+      };
+      document.getElementById('modalPreviewText').innerText = previewText;
+      document.getElementById('modalPreview').style.display = 'flex';
+    }
+
+    // --- ИЗМЕНЕННЫЙ БЛОК: Отправка отчета (fetch) ---
+    function sendReport() {
+      document.getElementById('sendBtn').disabled = true;
+      document.getElementById('editBtn').disabled = true;
+      document.getElementById('sendBtn').innerText = 'Отправка...';
+
+      const requestData = {
+        action: 'submitReport',
+        payload: window._REPORT
+      };
+
+      fetch(WEBAPP_URL, {
+        method: 'POST',
+        body: JSON.stringify(requestData),
+        headers: { 'Content-Type': 'application/json' },
+        redirect: 'follow'
+      })
+      .then(response => response.json())
+      .then(resp => {
+        // Логика из withSuccessHandler
+        if (resp && resp.status === 'ok') {
+          saveProjectHistory(window._REPORT.project);
+          localStorage.removeItem(DRAFT_KEY); 
+          tg.close(); 
+        } else {
+          alert('Ошибка при отправке: ' + JSON.stringify(resp));
+          document.getElementById('sendBtn').disabled = false;
+          document.getElementById('editBtn').disabled = false;
+          document.getElementById('sendBtn').innerText = 'Отправить отчет';
+        }
+      })
+      .catch(err => {
+        // Логика из withFailureHandler
+        alert('Ошибка сервера: ' + err);
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('editBtn').disabled = false;
+        document.getElementById('sendBtn').innerText = 'Отправить отчет';
+      });
+    }
+    // --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
+
+    // --- ИЗМЕНЕННЫЙ БЛОК: Смена имени (fetch) ---
+    function handleSaveName() {
+      const oldName = localStorage.getItem('driverName') || '';
+      const newName = document.getElementById('profileNameInput').value.trim();
+
+      if (!newName) {
+        alert('Имя не может быть пустым!');
+        return;
+      }
+
+      if (newName === oldName) {
+        document.getElementById('modalProfile').style.display = 'none';
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveNameBtn');
+      const cancelBtn = document.getElementById('cancelNameBtn');
+      saveBtn.disabled = true;
+      cancelBtn.disabled = true;
+      saveBtn.innerText = 'Сохранение...';
+
+      const requestData = {
+        action: 'updateDriverName',
+        payload: { oldName: oldName, newName: newName }
+      };
+
+      fetch(WEBAPP_URL, {
+        method: 'POST',
+        body: JSON.stringify(requestData),
+        headers: { 'Content-Type': 'application/json' },
+        redirect: 'follow'
+      })
+      .then(response => response.json())
+      .then(resp => {
+        // Логика из withSuccessHandler
+        if (resp && resp.status === 'ok') {
+          localStorage.setItem('driverName', newName);
+          document.getElementById('driverNameDisplay').innerText = `Водитель: ${newName}`;
+          document.getElementById('modalProfile').style.display = 'none';
+          alert(`Имя успешно обновлено!`);
+        } else {
+          alert('Ошибка при обновлении имени: ' + (resp.error || 'Неизвестная ошибка'));
+        }
+        
+        saveBtn.disabled = false;
+        cancelBtn.disabled = false;
+        saveBtn.innerText = 'Сохранить';
+      })
+      .catch(err => {
+        // Логика из withFailureHandler
+        alert('Ошибка сервера при обновлении имени: ' + err);
+        saveBtn.disabled = false;
+        cancelBtn.disabled = false;
+        saveBtn.innerText = 'Сохранить';
+      });
+    }
+    // --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
+    
+    // --- Функции истории проектов (без изменений) ---
+    function loadProjectHistory() {
+      try {
+        const history = JSON.parse(localStorage.getItem('projectHistory') || '[]');
+        const datalist = document.getElementById('project-list');
+        if (!document.getElementById('project').value) {
+            datalist.innerHTML = ''; 
+            history.forEach(project => {
+              const option = document.createElement('option');
+              option.value = project;
+              datalist.appendChild(option);
+            });
+        }
+      } catch (e) { console.error('Failed to load project history', e); }
+    }
+    function saveProjectHistory(project) {
+      try {
+        const currentProject = project.trim();
+        if (!currentProject) return; 
+        const history = JSON.parse(localStorage.getItem('projectHistory') || '[]');
+        const lowerCaseProject = currentProject.toLowerCase();
+        const filteredHistory = history.filter(p => p.toLowerCase() !== lowerCaseProject); 
+        const newHistory = [currentProject, ...filteredHistory];
+        const limitedHistory = newHistory.slice(0, 7);
+        localStorage.setItem('projectHistory', JSON.stringify(limitedHistory));
+      } catch (e) { console.error('Failed to save project history', e); }
+    }
+  </script>
+</body>
+</html>

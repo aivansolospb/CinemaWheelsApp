@@ -213,10 +213,11 @@
 
   <script>
     // --- (1) НОВЫЙ БЛОК: API-клиент (JSONP) ---
-    // !! ВАЖНО: Вставьте сюда URL вашего API из ШАГА 4 (ниже)
+    // !! ВАЖНО: Вставьте сюда URL вашего API
     const API_URL = 'https://script.google.com/macros/s/AKfycbzQB13KwQTcixThKikyas74sHNAwysIiANLa46ZbpZPV05nD7Wsd7fwqMHAikH5ySQ3Jg/exec'; 
 
     /**
+     * (ИЗМЕНЕННАЯ ФУНКЦИЯ)
      * Вызывает API на Apps Script с помощью JSONP
      * @param {string} action - Какую функцию вызвать ('getReferenceLists', 'submitReport', и т.д.)
      * @param {object | null} payload - Данные для отправки
@@ -229,14 +230,15 @@
       window[callbackName] = function(data) {
         try {
           if (data && data.status === 'error') {
-            if (errorCallback) errorCallback(data.error);
-            else alert('Ошибка API: ' + data.error);
+            // ИЗМЕНЕНО: Передаем ВЕСЬ объект ошибки
+            if (errorCallback) errorCallback(data); 
+            else alert('Ошибка API: ' + (data.message || data.error));
           } else {
             callback(data);
           }
         } catch (e) {
           console.error("Ошибка в колбэке JSONP:", e);
-          if (errorCallback) errorCallback(e.toString());
+          if (errorCallback) errorCallback({error: 'js_callback_error', message: e.toString()});
         }
         // Очистка
         document.body.removeChild(script);
@@ -253,7 +255,8 @@
       script.onerror = function() {
         const errorMsg = 'Сетевая ошибка или API недоступен.';
         console.error(errorMsg, src);
-        if (errorCallback) errorCallback(errorMsg);
+        // ИЗМЕНЕНО: Передаем объект ошибки
+        if (errorCallback) errorCallback({error: 'network_error', message: errorMsg});
         else alert(errorMsg);
         
         document.body.removeChild(script);
@@ -337,6 +340,10 @@
     // --- (Конец функций saveDraft, loadDraft) ---
 
 
+    /**
+     * (ИЗМЕНЕННЫЙ ОБРАБОТЧИК)
+     * Загружает данные, проверяет регистрацию и вешает слушатели
+     */
     document.addEventListener('DOMContentLoaded', () => {
 
       // --- (2) Определение метода входа (без изменений) ---
@@ -355,20 +362,28 @@
         };
         callApi('logAppOpen', openInfo, 
           () => { /* Успешно, ничего не делаем */ }, 
-          (err) => { console.error('Не удалось отправить лог открытия:', err); }
+          (err) => { console.error('Не удалось отправить лог открытия:', (err.message || err)); }
         );
       } catch (e) {
         console.error('Ошибка подготовки лога открытия:', e);
       }
       
-      let driverName = localStorage.getItem('driverName');
-      if (!driverName) {
-        driverName = prompt('Пожалуйста, введите ваше ФИО (это нужно только один раз):', '');
+      // --- (ИЗМЕНЕННАЯ ЛОГИКА РЕГИСТРАЦИИ) ---
+      
+      /**
+       * Эта функция запускает процесс регистрации:
+       * 1. Запрашивает имя.
+       * 2. Отправляет на сервер для проверки и регистрации.
+       * 3. При успехе - сохраняет имя и загружает справочники.
+       * 4. При ошибке "name_taken" - рекурсивно вызывает саму себя.
+       * 5. При другой ошибке - закрывает приложение.
+       */
+      function handleNewUserRegistration(promptMessage) {
+        let driverName = prompt(promptMessage || 'Пожалуйста, введите ваше ФИО (это нужно только один раз):', '');
+        
         if (driverName && driverName.trim()) {
           driverName = driverName.trim();
-          localStorage.setItem('driverName', driverName);
           
-          // --- (4) ЗАМЕНА google.script.run на callApi ---
           try {
             const userInfo = {
               driverName: driverName,
@@ -376,31 +391,68 @@
               username: _TG_USERNAME,
               accessMethod: _ACCESS_METHOD
             };
+            
+            // (4) Вызываем API для регистрации
             callApi('notifyOfNewUser', userInfo,
-              () => { /* Успешно, ничего не делаем */ },
-              (err) => { console.error('Не удалось отправить уведомление о регистрации:', err); }
+              (resp) => {
+                // УСПЕХ: Имя уникально и зарегистрировано
+                localStorage.setItem('driverName', driverName);
+                document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
+                
+                // (5) Теперь загружаем справочники
+                callApi('getReferenceLists', null, populateLists, (err) => {
+                  alert('Не удалось загрузить справочники: ' + (err.message || err));
+                });
+                
+                // И остальную загрузку
+                loadDraft(); 
+                loadProjectHistory();
+              },
+              (err) => {
+                // ОШИБКА:
+                if (err && err.error === 'name_taken') {
+                  // Имя занято, показываем сообщение от сервера и повторяем
+                  handleNewUserRegistration(err.message || 'Это ФИО уже занято. Пожалуйста, введите другое.');
+                } else {
+                  // Другая ошибка
+                  console.error('Не удалось отправить уведомление о регистрации:', err);
+                  alert('Произошла критическая ошибка регистрации: ' + (err.message || err.toString()));
+                  tg.close();
+                }
+              }
             );
           } catch (e) {
             console.error('Ошибка подготовки данных для регистрации:', e);
+            tg.close();
           }
           
         } else {
+          // Пользователь нажал "Отмена" или ввел пустое имя
           alert('Имя обязательно для отчетов. Пожалуйста, перезагрузите форму и введите имя.');
           tg.close();
-          return;
         }
       }
-      document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
 
-      // --- (5) ЗАМЕНА google.script.run на callApi ---
-      callApi('getReferenceLists', null, populateLists, (err) => {
-        alert('Не удалось загрузить справочники: ' + err);
-      });
-
+      // --- Запускаем проверку при загрузке ---
+      let driverName = localStorage.getItem('driverName');
+      if (!driverName) {
+        // Имени нет -> Запускаем процесс регистрации
+        handleNewUserRegistration();
+      } else {
+        // Пользователь уже есть, просто работаем
+        document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
+        
+        // (5) Загружаем справочники для существующего пользователя
+        callApi('getReferenceLists', null, populateLists, (err) => {
+          alert('Не удалось загрузить справочники: ' + (err.message || err));
+        });
+        
+        // И остальную загрузку
+        loadDraft(); 
+        loadProjectHistory();
+      }
+      
       // --- (Остальной JS без изменений) ---
-      loadDraft(); 
-      loadProjectHistory();
-
       const fieldsToWatch = ['date', 'project', 'techSelect', 'address', 'shiftStart', 'shiftEnd', 'trailerSelect', 'trailerStart', 'trailerEnd', 'km', 'comment'];
       fieldsToWatch.forEach(fieldId => {
         const element = document.getElementById(fieldId);
@@ -458,7 +510,7 @@
       document.getElementById('saveNameBtn').addEventListener('click', handleSaveName);
     });
 
-    // --- (Функции populateLists, calcOvertime, preparePreview без изменений) ---
+    // --- (Функции populateLists, calcOvertime без изменений) ---
     function populateLists(data) {
       const tSel = document.getElementById('techSelect');
       const trSel = document.getElementById('trailerSelect');
@@ -482,6 +534,11 @@
       const m = overtimeMinutes % 60;
       return `${h}:${m.toString().padStart(2,'0')}`;
     }
+    
+    /**
+     * (ИЗМЕНЕННАЯ ФУНКЦИЯ)
+     * Собирает данные, добавляет tgUsername
+     */
     function preparePreview() {
       const driverName = localStorage.getItem('driverName') || 'Неизвестно'; 
       const date = document.getElementById('date').value; 
@@ -523,13 +580,17 @@
         (comment) ? `Комментарий: ${comment}` : ''
       ].filter(Boolean).join('\n');
       
+      // ИЗМЕНЕНО: Добавлен tgUsername
       window._REPORT = {
-        date: date, driverName, tgId: _TG_ID, project, tech, 
+        date: date, driverName, 
+        tgId: _TG_ID, 
+        tgUsername: _TG_USERNAME, // ДОБАВЛЕНО
+        project, tech, 
         trailer: trailer || 'Нет прицепа', address,
         shiftStart, shiftEnd, overtime, 
         trailerStart: trailerStart || '', trailerEnd: trailerEnd || '', trailerOvertime,
         km, comment: comment || '',
-        accessMethod: _ACCESS_METHOD // Добавляем метод доступа
+        accessMethod: _ACCESS_METHOD 
       };
       document.getElementById('modalPreviewText').innerText = previewText;
       document.getElementById('modalPreview').style.display = 'flex';
@@ -555,7 +616,7 @@
       };
       
       const errorCallback = (err) => {
-        alert('Ошибка сервера: ' + err);
+        alert('Ошибка сервера: ' + (err.message || err.toString()));
         resetSendButton();
       };
       
@@ -569,7 +630,10 @@
         document.getElementById('sendBtn').innerText = 'Отправить отчет';
     }
     
-    // --- (7) ЗАМЕНА google.script.run на callApi (в handleSaveName) ---
+    /**
+     * (ИЗМЕНЕННАЯ ФУНКЦИЯ)
+     * Обрабатывает смену имени с проверкой на 'name_taken'
+     */
     function handleSaveName() {
       const oldName = localStorage.getItem('driverName') || '';
       const newName = document.getElementById('profileNameInput').value.trim();
@@ -595,19 +659,27 @@
       };
 
       const successCallback = (resp) => {
-        if (resp && resp.status === 'ok') {
+        if (resp && (resp.status === 'ok' || resp.status === 'no_change')) {
           localStorage.setItem('driverName', newName);
           document.getElementById('driverNameDisplay').innerText = `Водитель: ${newName}`;
           document.getElementById('modalProfile').style.display = 'none';
-          alert(`Имя успешно обновлено!`);
+          if (resp.status === 'ok') {
+            alert(`Имя успешно обновлено!`);
+          }
         } else {
-          alert('Ошибка при обновлении имени: ' + (resp.error || 'Неизвестная ошибка'));
+          // Непредвиденная ошибка
+          alert('Ошибка при обновлении имени: ' + (resp.message || resp.error || 'Неизвестная ошибка'));
         }
         resetSaveButton();
       };
 
       const errorCallback = (err) => {
-        alert('Ошибка сервера при обновлении имени: ' + err);
+        // ИЗМЕНЕНО: Обработка 'name_taken'
+        if (err && err.error === 'name_taken') {
+          alert(err.message || 'Это ФИО уже используется. Пожалуйста, введите другое.');
+        } else {
+          alert('Ошибка сервера при обновлении имени: ' + (err.message || err.toString()));
+        }
         resetSaveButton();
       };
       

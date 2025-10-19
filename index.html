@@ -180,8 +180,6 @@
   <h2>Отчёт о смене</h2>
   <h3 id="driverNameDisplay"></h3>
 
-  <button type"button" id="loadEditsBtn" class="toggle-btn" style="margin-top: 0;">Редактировать прошлую смену</button>
-
   <form id="reportForm" onsubmit="event.preventDefault(); preparePreview();">
     <label>Дата</label>
     <input type="date" id="date" required>
@@ -239,6 +237,7 @@
       </div>
     </div>
   </div>
+  
   <div id="modalProfile" class="modal-overlay">
     <div class="modal-content">
       <h3>Профиль водителя</h3>
@@ -247,6 +246,11 @@
       <p style="font-size: 0.9em; color: var(--hint-color); margin-top: 8px;">
         При изменении, имя будет обновлено во всех ваших прошлых отчетах.
       </p>
+      
+      <button type="button" id="loadEditsBtn" class="toggle-btn" style="margin-top: 16px; margin-bottom: 8px;">
+        Редактировать прошлую смену
+      </button>
+      
       <div class="modal-actions">
         <button type="button" id="cancelNameBtn" class="btn-secondary">Отмена</button>
         <button type="button" id="saveNameBtn" class="btn-primary">Сохранить</button>
@@ -287,7 +291,10 @@
           console.error("Ошибка в колбэке JSONP:", e);
           if (errorCallback) errorCallback({error: 'js_callback_error', message: e.toString()});
         }
-        document.body.removeChild(script);
+        // Очистка
+        if(document.body.contains(script)) {
+            document.body.removeChild(script);
+        }
         delete window[callbackName];
       };
 
@@ -304,7 +311,9 @@
         if (errorCallback) errorCallback({error: 'network_error', message: errorMsg});
         else alert(errorMsg);
         
-        document.body.removeChild(script);
+        if(document.body.contains(script)) {
+            document.body.removeChild(script);
+        }
         delete window[callbackName];
       };
       
@@ -460,7 +469,7 @@
         handleNewUserRegistration();
       } else {
         document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
-        callApi('getReferenceLists', null, populateLists, (err) => { alert('Не удалось загрузить справочники: ' + (err.message || err)); });
+        callApi('getReferenceLists', null, populateLists, (err) => { alert('Не удалось загрузить справочники: ' + (err.message || err.toString())); });
         loadDraft(); 
         loadProjectHistory();
       }
@@ -523,9 +532,13 @@
       const tSel = document.getElementById('techSelect');
       const trSel = document.getElementById('trailerSelect');
       tSel.innerHTML = '<option value="">— выберите технику —</option>';
-      (data.tech || []).forEach(x => { const o = document.createElement('option'); o.value = x; o.text = x; tSel.appendChild(o); });
+      
+      // ИСПРАВЛЕНИЕ ОШИБКИ: Проверяем, что data существует
+      (data && data.tech || []).forEach(x => { const o = document.createElement('option'); o.value = x; o.text = x; tSel.appendChild(o); });
+      
       trSel.innerHTML = '<option value="">— выберите прицеп —</option>';
-      (data.trailer || []).forEach(x => { const o = document.createElement('option'); o.value = x; o.text = x; trSel.appendChild(o); });
+      (data && data.trailer || []).forEach(x => { const o = document.createElement('option'); o.value = x; o.text = x; trSel.appendChild(o); });
+      
       loadDraft();
     }
     function calcOvertime(startTime, endTime) {
@@ -727,21 +740,51 @@
     }
     
     // --- (Функции истории проектов - без изменений) ---
-    function loadProjectHistory() { /*... (без изменений) ...*/ }
-    function saveProjectHistory(project) { /*... (без изменений) ...*/ }
+    function loadProjectHistory() {
+      try {
+        const history = JSON.parse(localStorage.getItem('projectHistory') || '[]');
+        const datalist = document.getElementById('project-list');
+        if (!document.getElementById('project').value) {
+            datalist.innerHTML = ''; 
+            history.forEach(project => {
+              const option = document.createElement('option');
+              option.value = project;
+              datalist.appendChild(option);
+            });
+        }
+      } catch (e) { console.error('Failed to load project history', e); }
+    }
+    function saveProjectHistory(project) {
+      try {
+        const currentProject = project.trim();
+        if (!currentProject) return; 
+        const history = JSON.parse(localStorage.getItem('projectHistory') || '[]');
+        const lowerCaseProject = currentProject.toLowerCase();
+        const filteredHistory = history.filter(p => p.toLowerCase() !== lowerCaseProject); 
+        const newHistory = [currentProject, ...filteredHistory];
+        const limitedHistory = newHistory.slice(0, 7);
+        localStorage.setItem('projectHistory', JSON.stringify(limitedHistory));
+      } catch (e) { console.error('Failed to save project history', e); }
+    }
     
     
     // --- НОВЫЕ ФУНКЦИИ ДЛЯ РЕДАКТИРОВАНИЯ ---
     
     /**
+     * (ИЗМЕНЕННАЯ ФУНКЦИЯ)
      * Запрашивает 10 последних отчетов с сервера
      */
     function loadLastTenReports() {
+      // 1. Скрываем окно профиля
+      document.getElementById('modalProfile').style.display = 'none';
+      
+      // 2. Показываем окно списка
       const modal = document.getElementById('modalEditList');
       const listEl = document.getElementById('editListContainer');
       listEl.innerHTML = '<div class="loading-text">Загрузка...</div>';
       modal.style.display = 'flex';
       
+      // 3. Вызываем API
       callApi('getLastTenReports', { tgId: _TG_ID }, showEditList, (err) => {
         listEl.innerHTML = `<div class="loading-text" style="color: var(--danger-color)">Ошибка загрузки: ${err.message || err.toString()}</div>`;
       });
@@ -811,17 +854,27 @@
           showOptionalBlock('trailerTimeInputs', 'toggleTrailerTimeBtn', true);
           document.getElementById('trailerStart').value = report.trailerStart;
           document.getElementById('trailerEnd').value = report.trailerEnd;
+        } else {
+          // Если время совпадает, просто оставляем поля пустыми и блок скрытым
+          document.getElementById('trailerStart').value = '';
+          document.getElementById('trailerEnd').value = '';
         }
+      } else {
+         document.getElementById('trailerSelect').value = '';
       }
       
       if (report.km > 0) {
         showOptionalBlock('kmBlock', 'addKmBtn');
         document.getElementById('km').value = report.km;
+      } else {
+        document.getElementById('km').value = '0';
       }
       
       if (report.comment) {
         showOptionalBlock('commentBlock', 'addCommentBtn');
         document.getElementById('comment').value = report.comment;
+      } else {
+         document.getElementById('comment').value = '';
       }
       
       // 4. Обновляем UI

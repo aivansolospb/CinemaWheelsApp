@@ -3,6 +3,25 @@
  * @description Логика основной формы: расчеты, подготовка превью, отправка данных.
  */
 
+/**
+ * НОВАЯ ФУНКЦИЯ: Точка входа для отправки формы.
+ * Проверяет, есть ли изменения, перед тем как показать превью.
+ */
+function handleSubmit() {
+    // Если мы в режиме редактирования и изменений нет
+    if (_EDIT_MODE_DATA && !hasChanges()) {
+        const hint = document.getElementById('noChangesHint');
+        hint.style.display = 'block';
+        // Прячем подсказку через 2 секунды
+        setTimeout(() => {
+            hint.style.display = 'none';
+        }, 2000);
+        return; // Прерываем выполнение
+    }
+    // Если изменения есть или это новый отчет, показываем превью
+    preparePreview();
+}
+
 function populateLists(data) {
     const tSel = document.getElementById('techSelect');
     const trSel = document.getElementById('trailerSelect');
@@ -23,7 +42,7 @@ function populateLists(data) {
         trSel.appendChild(o); 
     });
     
-    loadDraft(); // Загружаем черновик после того, как списки готовы
+    loadDraft();
 }
 
 function calcOvertime(startTime, endTime) {
@@ -32,10 +51,10 @@ function calcOvertime(startTime, endTime) {
     const [eh, em] = endTime.split(':').map(Number);
     let start = sh * 60 + sm;
     let end = eh * 60 + em;
-    if (end < start) end += 24 * 60; // Учет перехода через полночь
+    if (end < start) end += 24 * 60;
     const duration = end - start;
-    const rawOvertimeMinutes = Math.max(0, duration - 12 * 60); // Более 12 часов
-    const overtimeMinutes = Math.round(rawOvertimeMinutes / 15) * 15; // Округление до 15 мин
+    const rawOvertimeMinutes = Math.max(0, duration - 12 * 60);
+    const overtimeMinutes = Math.round(rawOvertimeMinutes / 15) * 15;
     const h = Math.floor(overtimeMinutes / 60);
     const m = overtimeMinutes % 60;
     return `${h}:${m.toString().padStart(2, '0')}`;
@@ -52,69 +71,21 @@ function preparePreview() {
         reason = reason.trim().substring(0, 50);
     }
 
-    const driverName = localStorage.getItem('driverName') || 'Неизвестно';
-    const date = document.getElementById('date').value;
-    let formattedDate = date;
-    try {
-        const parts = date.split('-');
-        formattedDate = `${parts[2]}.${parts[1]}.${parts[0].slice(-2)}`;
-    } catch (e) {
-        formattedDate = date;
-    }
-    const project = document.getElementById('project').value;
-    const tech = document.getElementById('techSelect').value;
-    const address = document.getElementById('address').value;
-    const shiftStart = document.getElementById('shiftStart').value;
-    const shiftEnd = document.getElementById('shiftEnd').value;
-    const isTrailerVisible = document.getElementById('trailerBlock').style.display === 'block';
-    const isKmVisible = document.getElementById('kmBlock').style.display === 'block';
-    const isCommentVisible = document.getElementById('commentBlock').style.display === 'block';
-    const comment = isCommentVisible ? document.getElementById('comment').value.trim() : '';
-    const trailer = isTrailerVisible ? document.getElementById('trailerSelect').value : '';
-    const km = isKmVisible ? (document.getElementById('km').value || 0) : 0;
-    const customTrailerTime = document.getElementById('trailerTimeInputs').style.display === 'block';
-    const trailerStart = (isTrailerVisible && customTrailerTime) ? document.getElementById('trailerStart').value : (isTrailerVisible ? shiftStart : '');
-    const trailerEnd = (isTrailerVisible && customTrailerTime) ? document.getElementById('trailerEnd').value : (isTrailerVisible ? shiftEnd : '');
-
-    if (isTrailerVisible && !trailer) { alert('Вы добавили блок "Прицеп", но не выбрали прицеп из списка.'); return; }
-    if (isTrailerVisible && customTrailerTime && (!trailerStart || !trailerEnd)) { alert('Вы указали, что время прицепа отличается, но не заполнили поля "Начало / Конец" для него.'); return; }
-
-    const overtime = calcOvertime(shiftStart, shiftEnd);
-    const trailerOvertime = (isTrailerVisible && trailer) ? calcOvertime(trailerStart, trailerEnd) : '0:00';
-
-    let previewItems = [
-        `🗓 ${formattedDate}`, `Водитель: ${driverName}`, `Проект: ${project}`,
-        `Техника: ${tech || '-'}`, trailer ? `Прицеп: ${trailer}` : `Прицеп: нет`,
-        `Адрес: ${address}`, `Смена: ${shiftStart} — ${shiftEnd} (Переработка: ${overtime})`,
-        trailer ? `Смена прицепа: ${trailerStart} — ${trailerEnd} (Переработка: ${trailerOvertime})` : '',
-        (km > 0) ? `Перепробег: ${km} км` : `Перепробег: 0 км`,
-        (comment) ? `Комментарий: ${comment}` : ''
-    ];
-
-    if (_EDIT_MODE_DATA) {
-        previewItems.push(`\n❗️ ПРИЧИНА РЕДАКТИРОВАНИЯ:\n${reason}`);
-    }
-
-    document.getElementById('modalPreviewText').innerText = previewItems.filter(Boolean).join('\n');
-
-    _REPORT = {
-        date: date, driverName, tgId: _TG_ID, tgUsername: _TG_USERNAME, project, tech,
-        trailer: trailer || 'Нет прицепа', // ИЗМЕНЕНО (Фикс Бага 5)
-        address,
-        shiftStart, shiftEnd, overtime,
-        trailerStart: trailerStart || '', trailerEnd: trailerEnd || '', trailerOvertime,
-        km, comment: comment || '',
-        accessMethod: _ACCESS_METHOD
-    };
+    const reportData = getFormData();
     
-    if (_EDIT_MODE_DATA) {
-        _REPORT.isEdit = true;
-        _REPORT.reason = reason;
-        _REPORT.oldRowNumber = _EDIT_MODE_DATA.rowNumber;
-        _REPORT.oldMessageId = _EDIT_MODE_DATA.messageId;
-    } else {
-        _REPORT.isEdit = false;
+    if (reportData.isTrailerVisible && !reportData.trailer) {
+        alert('Вы добавили блок "Прицеп", но не выбрали прицеп из списка.');
+        return;
     }
+    if (reportData.isTrailerVisible && reportData.customTrailerTime && (!reportData.trailerStart || !reportData.trailerEnd)) {
+        alert('Вы указали, что время прицепа отличается, но не заполнили поля "Начало / Конец" для него.');
+        return;
+    }
+
+    const previewText = generatePreviewText(reportData, reason);
+    document.getElementById('modalPreviewText').innerText = previewText;
+    
+    _REPORT = createReportObject(reportData, reason);
 
     document.getElementById('modalPreview').style.display = 'flex';
     document.getElementById('sendBtn').disabled = false;
@@ -122,42 +93,8 @@ function preparePreview() {
     document.getElementById('sendBtn').innerText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
 }
 
-/**
- * Отправляет данные отчета на сервер.
- */
 function sendReport() {
-    
-    // ИЗМЕНЕНО (Фикс Бага 5): Проверка на наличие изменений
-    if (_REPORT.isEdit && _EDIT_MODE_DATA) {
-        const old = _EDIT_MODE_DATA;
-        
-        const oldKm = String(old.km || '0');
-        const newKm = String(_REPORT.km || '0');
-        const oldDate = old.date.split('T')[0];
-        const newDate = _REPORT.date.split('T')[0];
-
-        const isSame = (
-            oldDate === newDate &&
-            old.project === _REPORT.project &&
-            old.tech === _REPORT.tech &&
-            old.address === _REPORT.address &&
-            old.shiftStart === _REPORT.shiftStart &&
-            old.shiftEnd === _REPORT.shiftEnd &&
-            old.trailer === _REPORT.trailer &&
-            old.trailerStart === _REPORT.trailerStart &&
-            old.trailerEnd === _REPORT.trailerEnd &&
-            oldKm === newKm &&
-            old.comment === _REPORT.comment
-        );
-        
-        if (isSame) {
-            alert('Нет изменений. Редактирование отменено.');
-            resetSendButton(); 
-            document.getElementById('modalPreview').style.display = 'none';
-            return; // Останавливаем выполнение
-        }
-    }
-    // --- Конец фикса Бага 5 ---
+    // УДАЛЕНО: Старая проверка на изменения. Теперь она в handleSubmit.
 
     document.getElementById('sendBtn').disabled = true;
     document.getElementById('editBtn').disabled = true;
@@ -193,7 +130,6 @@ function sendReport() {
     }
 }
 
-
 function setupFormEventListeners() {
     document.getElementById('sendBtn').addEventListener('click', sendReport);
 
@@ -208,3 +144,4 @@ function setupFormEventListeners() {
       saveDraft(); 
     });
 }
+

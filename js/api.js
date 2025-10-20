@@ -48,4 +48,3 @@ function callApi(action, payload, callback, errorCallback) {
   script.src = src;
   document.body.appendChild(script);
 }
-

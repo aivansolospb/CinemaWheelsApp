@@ -3,10 +3,6 @@
  * @description Логика основной формы: расчеты, подготовка превью, отправка данных.
  */
 
-/**
- * Заполняет выпадающие списки (техника, прицепы) данными с сервера.
- * @param {object} data - Объект со списками { tech: [...], trailer: [...] }.
- */
 function populateLists(data) {
     const tSel = document.getElementById('techSelect');
     const trSel = document.getElementById('trailerSelect');
@@ -30,12 +26,6 @@ function populateLists(data) {
     loadDraft(); // Загружаем черновик после того, как списки готовы
 }
 
-/**
- * Рассчитывает время переработки.
- * @param {string} startTime - Время начала в формате "HH:mm".
- * @param {string} endTime - Время окончания в формате "HH:mm".
- * @returns {string} - Время переработки в формате "H:mm".
- */
 function calcOvertime(startTime, endTime) {
     if (!startTime || !endTime) return '0:00';
     const [sh, sm] = startTime.split(':').map(Number);
@@ -51,9 +41,6 @@ function calcOvertime(startTime, endTime) {
     return `${h}:${m.toString().padStart(2, '0')}`;
 }
 
-/**
- * Готовит данные отчета, формирует текст для превью и показывает модальное окно.
- */
 function preparePreview() {
     let reason = null;
     if (_EDIT_MODE_DATA) {
@@ -112,7 +99,8 @@ function preparePreview() {
 
     _REPORT = {
         date: date, driverName, tgId: _TG_ID, tgUsername: _TG_USERNAME, project, tech,
-        trailer: trailer || 'Нет прицепа', address,
+        trailer: trailer || 'Нет прицепа', // ИЗМЕНЕНО (Фикс Бага 5)
+        address,
         shiftStart, shiftEnd, overtime,
         trailerStart: trailerStart || '', trailerEnd: trailerEnd || '', trailerOvertime,
         km, comment: comment || '',
@@ -138,6 +126,39 @@ function preparePreview() {
  * Отправляет данные отчета на сервер.
  */
 function sendReport() {
+    
+    // ИЗМЕНЕНО (Фикс Бага 5): Проверка на наличие изменений
+    if (_REPORT.isEdit && _EDIT_MODE_DATA) {
+        const old = _EDIT_MODE_DATA;
+        
+        const oldKm = String(old.km || '0');
+        const newKm = String(_REPORT.km || '0');
+        const oldDate = old.date.split('T')[0];
+        const newDate = _REPORT.date.split('T')[0];
+
+        const isSame = (
+            oldDate === newDate &&
+            old.project === _REPORT.project &&
+            old.tech === _REPORT.tech &&
+            old.address === _REPORT.address &&
+            old.shiftStart === _REPORT.shiftStart &&
+            old.shiftEnd === _REPORT.shiftEnd &&
+            old.trailer === _REPORT.trailer &&
+            old.trailerStart === _REPORT.trailerStart &&
+            old.trailerEnd === _REPORT.trailerEnd &&
+            oldKm === newKm &&
+            old.comment === _REPORT.comment
+        );
+        
+        if (isSame) {
+            alert('Нет изменений. Редактирование отменено.');
+            resetSendButton(); 
+            document.getElementById('modalPreview').style.display = 'none';
+            return; // Останавливаем выполнение
+        }
+    }
+    // --- Конец фикса Бага 5 ---
+
     document.getElementById('sendBtn').disabled = true;
     document.getElementById('editBtn').disabled = true;
     document.getElementById('sendBtn').innerText = 'Отправка...';
@@ -173,9 +194,6 @@ function sendReport() {
 }
 
 
-/**
- * Устанавливает слушатели событий для элементов формы.
- */
 function setupFormEventListeners() {
     document.getElementById('sendBtn').addEventListener('click', sendReport);
 

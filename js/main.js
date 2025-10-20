@@ -20,17 +20,28 @@ function initTelegramWebApp() {
         tg.onEvent('themeChanged', () => {
             document.documentElement.style.colorScheme = tg.colorScheme;
         });
+
+        // Настройка главной кнопки
+        tg.MainButton.setText('Показать превью');
+        tg.MainButton.onClick(handleSubmit);
+        tg.MainButton.show();
     } catch (e) {
         console.error('Telegram WebApp script error', e);
+        // Fallback для браузера, где нет tg
+        const form = document.getElementById('reportForm');
+        const btn = document.createElement('button');
+        btn.type = 'submit';
+        btn.innerText = 'Показать превью (Браузер)';
+        form.appendChild(btn);
     }
 }
 
 // --- Логирование и аутентификация ---
 function logAndAuth() {
-    const user = tg.initDataUnsafe?.user || tg.initData?.user || null;
-    _ACCESS_METHOD = user ? 'Telegram' : 'Browser (Direct Link)';
-    _TG_ID = user ? (user.id || '') : '';
-    _TG_USERNAME = user ? (user.username || '') : '';
+    const user = tg.initDataUnsafe?.user || {id: 'test_user_id', username: 'test_user'};
+    _ACCESS_METHOD = tg.initDataUnsafe?.user ? 'Telegram' : 'Browser (Direct Link)';
+    _TG_ID = user.id || '';
+    _TG_USERNAME = user.username || '';
 
     try {
         const openInfo = { accessMethod: _ACCESS_METHOD, tgId: _TG_ID, username: _TG_USERNAME };
@@ -53,7 +64,7 @@ function logAndAuth() {
 // --- Загрузка справочников ---
 function loadReferenceLists() {
     callApi('getReferenceLists', null, populateLists, (err) => {
-        alert('Не удалось загрузить справочники: ' + (err.message || err.toString()));
+        tg.showAlert('Не удалось загрузить справочники: ' + (err.message || err.toString()));
     });
 }
 
@@ -64,11 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReferenceLists();
 
     setupFormEventListeners();
-    setupModalEventListeners();
     setupProfileEventListeners();
-    setupEditEventListeners();
     
     document.getElementById('date').value = new Date().toISOString().slice(0, 10);
     loadDraft();
 });
-

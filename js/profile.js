@@ -38,7 +38,6 @@ function handleSaveName() {
             hideProfileModal();
             if (isRegistration) {
                 loadProjectHistory();
-                loadDraft();
             } else {
                  tg.showAlert(`Имя успешно обновлено!`);
             }
@@ -51,8 +50,6 @@ function handleSaveName() {
                     if (isRegistration) tg.close();
                 });
             }
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'Сохранить';
         }
     );
 }
@@ -93,3 +90,4 @@ function setupProfileEventListeners() {
         });
     }
 }
+

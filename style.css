@@ -30,7 +30,14 @@ h2 { margin-bottom: 8px; }
   margin-top: -5px;
   margin-bottom: 20px;
 }
-label { display: block; margin-top: 16px; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
+.form-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+.form-group:last-of-type {
+  margin-bottom: 0;
+}
+label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
 input, select, textarea {
   width: 100%; padding: 14px 12px; margin-top: 4px; border-radius: 8px;
   border: 1px solid var(--separator-color);
@@ -185,5 +192,44 @@ hr { border: 0; border-top: 1px solid var(--separator-color); }
   color: var(--hint-color);
   margin-top: 20px;
   margin-bottom: -10px;
+}
+.tooltip {
+  position: absolute;
+  top: -28px;
+  left: 0;
+  background-color: var(--invalid-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8em;
+  font-weight: 500;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(5px);
+  z-index: 10;
+}
+.tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 10px;
+  border-width: 4px;
+  border-style: solid;
+  border-color: var(--invalid-color) transparent transparent transparent;
+}
+.form-group .row ~ .tooltip {
+    bottom: -30px; 
+    top: auto;
+}
+.form-group .row ~ .tooltip::after {
+    bottom: auto;
+    top: -4px;
+    border-color: transparent transparent var(--invalid-color) transparent;
 }
 

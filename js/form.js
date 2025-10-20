@@ -4,6 +4,7 @@
  */
 
 const REQUIRED_FIELDS = ['date', 'project', 'techSelect', 'address', 'shiftStart', 'shiftEnd'];
+let invalidClickCounter = 0;
 
 function isFormValid() {
     return REQUIRED_FIELDS.every(id => document.getElementById(id)?.value);
@@ -37,25 +38,34 @@ function updateFormValidationState() {
 }
 
 function triggerInvalidFormAnimation() {
-    try {
-        tg.HapticFeedback.notificationOccurred('error');
-    } catch(e) { console.error("Haptic feedback error", e); }
+    try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
+    invalidClickCounter++;
 
     REQUIRED_FIELDS.forEach(id => {
         const el = document.getElementById(id);
         if (el && !el.value) {
-            el.classList.add('shake');
-            setTimeout(() => el.classList.remove('shake'), 500);
+            const wrapper = el.closest('.form-group');
+            wrapper.classList.add('shake');
+            setTimeout(() => wrapper.classList.remove('shake'), 500);
+
+            if (invalidClickCounter >= 3) {
+                const tooltip = wrapper.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.classList.add('visible');
+                    setTimeout(() => tooltip.classList.remove('visible'), 3000);
+                }
+            }
         }
     });
-    
-    tg.showAlert('Пожалуйста, заполните все обязательные поля. Они подсвечены красным.');
 }
 
 function setupFormValidationListeners() {
     const allInputs = document.querySelectorAll('.required-field, input, select, textarea');
     allInputs.forEach(el => {
         el.addEventListener('input', () => {
+            invalidClickCounter = 0;
+            document.querySelectorAll('.tooltip.visible').forEach(t => t.classList.remove('visible'));
+            
             if(el.classList.contains('required-field')) {
                 updateFormValidationState();
             }

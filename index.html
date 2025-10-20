@@ -14,21 +14,38 @@
   <h3 id="driverNameDisplay"></h3>
 
   <form id="reportForm" onsubmit="event.preventDefault();">
-    <label>Дата</label>
-    <input type="date" id="date" class="required-field">
-    <label>Проект</label>
-    <input id="project" placeholder="Название проекта" list="project-list" maxlength="50" class="required-field">
-    <datalist id="project-list"></datalist>
-    <label>Техника</label>
-    <select id="techSelect" class="required-field"></select>
-    <label>Место / Адрес</label>
-    <input id="address" placeholder="Где вы работали" maxlength="100" class="required-field">
-    <label>Смена (Начало / Конец)</label>
-    <div class="row">
-      <input type="time" id="shiftStart" class="required-field">
-      <input type="time" id="shiftEnd" class="required-field">
+    <div class="form-group">
+      <label for="date">Дата</label>
+      <input type="date" id="date" class="required-field">
+      <div class="tooltip">Обязательное поле</div>
     </div>
+    <div class="form-group">
+      <label for="project">Проект</label>
+      <input id="project" placeholder="Название проекта" list="project-list" maxlength="50" class="required-field">
+      <datalist id="project-list"></datalist>
+      <div class="tooltip">Обязательное поле</div>
+    </div>
+    <div class="form-group">
+      <label for="techSelect">Техника</label>
+      <select id="techSelect" class="required-field"></select>
+      <div class="tooltip">Обязательное поле</div>
+    </div>
+    <div class="form-group">
+      <label for="address">Место / Адрес</label>
+      <input id="address" placeholder="Где вы работали" maxlength="100" class="required-field">
+      <div class="tooltip">Обязательное поле</div>
+    </div>
+    <div class="form-group">
+      <label>Смена (Начало / Конец)</label>
+      <div class="row">
+        <input type="time" id="shiftStart" class="required-field">
+        <input type="time" id="shiftEnd" class="required-field">
+      </div>
+      <div class="tooltip">Обязательное поле</div>
+    </div>
+    
     <hr style="margin: 18px 0;">
+    
     <button type="button" id="addTrailerBtn" class="toggle-btn">+ Добавить прицеп</button>
     <div id="trailerBlock" style="display:none;">
       <div class="optional-block-header">
@@ -89,10 +106,6 @@
             <h3>Профиль водителя</h3>
             <button type="button" id="changeNameMenuBtn" class="toggle-btn">Изменить ФИО</button>
             <button type="button" id="loadEditsBtn" class="toggle-btn">Редактировать смену</button>
-            <div id="admin-panel">
-                <hr>
-                <button type="button" id="clearCacheBtn" class="toggle-btn-danger">Очистить кэш и выйти</button>
-            </div>
             
             <p id="appVersion" class="app-version"></p>
             

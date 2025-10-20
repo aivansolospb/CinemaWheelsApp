@@ -15,22 +15,22 @@
 
   <form id="reportForm" onsubmit="event.preventDefault();">
     <label>Дата</label>
-    <input type="date" id="date" required>
+    <input type="date" id="date" class="required-field">
     <label>Проект</label>
-    <input id="project" placeholder="Название проекта" required list="project-list" maxlength="50">
+    <input id="project" placeholder="Название проекта" list="project-list" maxlength="50" class="required-field">
     <datalist id="project-list"></datalist>
     <label>Техника</label>
-    <select id="techSelect" required></select>
+    <select id="techSelect" class="required-field"></select>
     <label>Место / Адрес</label>
-    <input id="address" placeholder="Где вы работали" required maxlength="100">
+    <input id="address" placeholder="Где вы работали" maxlength="100" class="required-field">
     <label>Смена (Начало / Конец)</label>
     <div class="row">
-      <input type="time" id="shiftStart" required>
-      <input type="time" id="shiftEnd" required>
+      <input type="time" id="shiftStart" class="required-field">
+      <input type="time" id="shiftEnd" class="required-field">
     </div>
+    <hr style="margin: 18px 0;">
     <button type="button" id="addTrailerBtn" class="toggle-btn">+ Добавить прицеп</button>
     <div id="trailerBlock" style="display:none;">
-      <hr>
       <div class="optional-block-header">
         <label>Прицеп</label>
         <button type="button" class="remove-btn" onclick="hideOptionalBlock('trailerBlock', 'addTrailerBtn')">Убрать</button>
@@ -46,72 +46,85 @@
           <input type="time" id="trailerEnd">
         </div>
       </div>
+      <hr style="margin: 18px 0;">
     </div>
     <button type="button" id="addKmBtn" class="toggle-btn">+ Добавить перепробег</button>
     <div id="kmBlock" style="display:none;">
-       <hr>
        <div class="optional-block-header">
          <label>Перепробег (км)</label>
          <button type="button" class="remove-btn" onclick="hideOptionalBlock('kmBlock', 'addKmBtn')">Убрать</button>
        </div>
        <input type="number" id="km" min="0" step="1" value="0">
+       <hr style="margin: 18px 0;">
     </div>
     <button type="button" id="addCommentBtn" class="toggle-btn">+ Добавить комментарий</button>
     <div id="commentBlock" style="display:none;">
-       <hr>
        <div class="optional-block-header">
          <label>Комментарий</label>
          <button type="button" class="remove-btn" onclick="hideOptionalBlock('commentBlock', 'addCommentBtn')">Убрать</button>
        </div>
        <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
+       <hr style="margin: 18px 0;">
     </div>
     
-    <div id="cancelEditBtnContainer" style="margin-top: 16px;"></div>
+    <div id="cancelEditBtnContainer"></div>
   </form>
 
-  <!-- HTML Модальные окна, которые были возвращены -->
   <div id="modalProfile" class="modal-overlay">
     <div class="modal-content">
-      <h3 id="profileModalTitle">Профиль водителя</h3>
-      <label for="profileNameInput" id="profileNameLabel">Ваше ФИО</label>
-      <input type="text" id="profileNameInput" placeholder="Введите ваше ФИО">
-      <p style="font-size: 0.9em; color: var(--hint-color); margin-top: 8px;" id="profileHint">
-        При изменении, имя будет обновлено во всех ваших прошлых отчетах.
-      </p>
-      
-      <div id="profileMenu" style="display: none;">
-        <button type="button" id="changeNameMenuBtn" class="toggle-btn">Изменить ФИО</button>
-        <button type="button" id="loadEditsBtn" class="toggle-btn">Редактировать смену</button>
+        <div id="profileMenu">
+            <h3>Профиль водителя</h3>
+            <button type="button" id="changeNameMenuBtn" class="toggle-btn">Изменить ФИО</button>
+            <button type="button" id="loadEditsBtn" class="toggle-btn">Редактировать смену</button>
+            
+            <!-- Панель администратора -->
+            <div id="admin-panel">
+                <hr>
+                <button type="button" id="clearCacheBtn" class="toggle-btn-danger">Очистить кэш и выйти</button>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button type="button" id="closeProfileBtn" class="btn-secondary" style="width: 100%;">Закрыть</button>
+            </div>
+        </div>
+        <div id="profileChangeName" style="display: none;">
+            <h3>Изменение ФИО</h3>
+            <label for="profileNameInput">Ваше ФИО</label>
+            <input type="text" id="profileNameInput" placeholder="Введите ваше ФИО">
+            <p style="font-size: 0.9em; color: var(--hint-color); margin-top: 8px;">
+                При изменении, имя будет обновлено во всех ваших прошлых отчетах.
+            </p>
+            <div class="modal-actions">
+                <button type="button" id="cancelNameBtn" class="btn-secondary">Отмена</button>
+                <button type="button" id="saveNameBtn" class="btn-primary">Сохранить</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="modalEditList" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Выберите отчёт для редактирования</h3>
+      <div id="editListContainer">
+        <div class="loading-text">Загрузка...</div>
       </div>
-      
-      <div class="modal-actions">
-        <button type="button" id="cancelNameBtn" class="btn-secondary">Отмена</button>
-        <button type="button" id="saveNameBtn" class="btn-primary">Сохранить</button>
+      <div class="modal-actions" style="margin-top: 10px;">
+        <button type="button" id="cancelEditListBtn" class="btn-secondary" style="width: 100%;">Отмена</button>
       </div>
     </div>
   </div>
 
-  <div id="modalReason" class="modal-overlay">
-      <div class="modal-content">
-        <h3>Причина редактирования</h3>
-        <label for="reasonInput">Укажите причину (max 50 символов):</label>
-        <input type="text" id="reasonInput" placeholder="Например: ошибка в адресе" maxlength="50">
-        <div class="modal-actions">
-            <button type="button" id="cancelReasonBtn" class="btn-secondary">Отмена</button>
-            <button type="button" id="saveReasonBtn" class="btn-primary">Готово</button>
-        </div>
+   <div id="modalReason" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Причина редактирования</h3>
+      <textarea id="reasonInput" placeholder="Укажите причину (max 50 символов)..." rows="3" maxlength="50"></textarea>
+      <div class="modal-actions">
+        <button type="button" id="cancelReasonBtn" class="btn-secondary">Отмена</button>
+        <button type="button" id="submitReasonBtn" class="btn-primary">Готово</button>
       </div>
+    </div>
   </div>
 
-
-  <!-- ВАЖНО: Исправлены пути к скриптам -->
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/draft.js"></script>
-  <script src="js/history.js"></script>
-  <script src="js/profile.js"></script>
-  <script src="js/edit.js"></script>
-  <script src="js/form.js"></script>
-  <script src="js/main.js"></script>
 </body>
 </html>
+

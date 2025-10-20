@@ -50,6 +50,7 @@ function showEditList(data) {
 function selectReportForEdit(report) {
     _EDIT_MODE_DATA = { ...report };
     
+    // Заполняем основные поля
     document.getElementById('date').value = report.date; 
     document.getElementById('project').value = report.project;
     document.getElementById('techSelect').value = report.tech;
@@ -57,12 +58,14 @@ function selectReportForEdit(report) {
     document.getElementById('shiftStart').value = report.shiftStart;
     document.getElementById('shiftEnd').value = report.shiftEnd;
 
-    // Сброс и заполнение опциональных блоков
+    // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ для сброса и заполнения опциональных блоков
     resetAndFillOptionalBlocks(report);
     
+    // Закрываем модальное окно
     document.getElementById('modalEditList').style.display = 'none';
     document.getElementById('submitBtn').innerText = 'Показать превью (Редактирование)';
     
+    // Добавляем кнопку "Отменить редактирование"
     const cancelContainer = document.getElementById('cancelEditBtnContainer');
     if (!document.getElementById('cancelEditBtn')) {
         const cancelBtn = document.createElement('button');
@@ -84,7 +87,10 @@ function cancelEdit(showAlert = true) {
       
     _EDIT_MODE_DATA = null;
     document.getElementById('reportForm').reset();
+    
+    // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ для сброса опциональных блоков
     resetOptionalBlocksVisibility();
+    
     loadDraft(); 
     
     document.getElementById('submitBtn').innerText = 'Показать превью';
@@ -95,12 +101,8 @@ function cancelEdit(showAlert = true) {
     if (showAlert) alert('Редактирование отменено.');
 }
 
-/**
- * НОВАЯ ФУНКЦИЯ: Сравнивает текущие данные формы с исходными данными (_EDIT_MODE_DATA).
- * @returns {boolean} - true, если есть изменения, иначе false.
- */
 function hasChanges() {
-    if (!_EDIT_MODE_DATA) return true; // Если не режим редактирования, считаем, что изменения есть
+    if (!_EDIT_MODE_DATA) return true;
 
     const old = _EDIT_MODE_DATA;
     const form = document.getElementById('reportForm');
@@ -119,7 +121,6 @@ function hasChanges() {
         comment: document.getElementById('commentBlock').style.display === 'block' ? form.comment.value : ''
     };
     
-    // Сравниваем каждое поле
     if (old.date !== currentData.date) return true;
     if (old.project !== currentData.project) return true;
     if (old.tech !== currentData.tech) return true;
@@ -132,10 +133,10 @@ function hasChanges() {
     if (String(old.km || '0') !== currentData.km) return true;
     if ((old.comment || '') !== currentData.comment) return true;
 
-    return false; // Если ни одно условие не сработало, изменений нет
+    return false;
 }
 
 function setupEditEventListeners() {
-    document.getElementById('loadEditsBtn').addEventListener('click', loadLastTenReports);
+    document.getElementById('loadEdtsBtn').addEventListener('click', loadLastTenReports);
 }
 

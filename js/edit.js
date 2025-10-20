@@ -19,6 +19,7 @@ function showEditList(data) {
 
     const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     
+    // Используем нативный popup для выбора отчета, так как это удобно
     const popupButtons = reports.map(report => {
         let displayDate = '??.??';
         try {
@@ -42,7 +43,7 @@ function showEditList(data) {
         message: 'Какой из последних 10 отчетов вы хотите отредактировать?',
         buttons: popupButtons
     }, (buttonId) => {
-        if (buttonId) { // Если не 'cancel'
+        if (buttonId && buttonId !== 'cancel') {
             const selectedReport = reports.find(r => String(r.rowNumber) === String(buttonId));
             if (selectedReport) {
                 selectReportForEdit(selectedReport);

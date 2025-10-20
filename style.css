@@ -74,6 +74,17 @@ button.toggle-btn-danger {
   font-weight: 500;
   border: 1px solid var(--danger-color);
 }
+/* НОВЫЙ СТИЛЬ */
+button.remove-btn {
+  background-color: transparent;
+  color: var(--danger-color);
+  margin-top: 10px;
+  font-weight: 500;
+  font-size: 0.9em;
+  padding: 8px 12px;
+  border: 1px solid var(--separator-color);
+  width: auto; /* Чтобы кнопка не была на всю ширину */
+}
 .row { display: flex; gap: 10px; }
 .row > * { flex: 1; }
 hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }

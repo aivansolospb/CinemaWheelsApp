@@ -3,10 +3,36 @@
  * @description Логика основной формы: расчеты, подготовка превью, отправка данных.
  */
 
+function validateForm() {
+    const form = document.getElementById('reportForm');
+    const requiredFields = [
+        { id: 'date', name: 'Дата' },
+        { id: 'project', name: 'Проект' },
+        { id: 'techSelect', name: 'Техника' },
+        { id: 'address', name: 'Адрес' },
+        { id: 'shiftStart', name: 'Начало смены' },
+        { id: 'shiftEnd', name: 'Конец смены' },
+    ];
+
+    for (const field of requiredFields) {
+        const element = document.getElementById(field.id);
+        if (!element || !element.value) {
+            tg.showAlert(`Пожалуйста, заполните поле "${field.name}".`);
+            return false;
+        }
+    }
+    return true;
+}
+
+
 function handleSubmit() {
-    // Игнорируем клики во время отправки
     if (tg.MainButton.isVisible && tg.MainButton.isProgressVisible) return;
     
+    // ИСПРАВЛЕНО: Добавлена валидация перед отправкой
+    if (!validateForm()) {
+        return;
+    }
+
     if (_EDIT_MODE_DATA && !hasChanges()) {
         tg.showAlert('Вы не внесли никаких изменений в отчет.');
         return;
@@ -19,6 +45,12 @@ function populateLists(data) {
     const trSel = document.getElementById('trailerSelect');
     
     if (!tSel || !trSel) return;
+    
+    const isFirstRun = tSel.options.length <= 1;
+
+    // Сохраняем текущие значения, чтобы не сбросить выбор пользователя при обновлении
+    const currentTech = tSel.value;
+    const currentTrailer = trSel.value;
 
     tSel.innerHTML = '<option value="">— выберите технику —</option>';
     (data.tech || []).forEach(x => { 
@@ -32,7 +64,15 @@ function populateLists(data) {
         o.value = x; o.text = x; trSel.appendChild(o); 
     });
     
-    loadDraft();
+    // Восстанавливаем значения
+    tSel.value = currentTech;
+    trSel.value = currentTrailer;
+
+    // Загрузка черновика происходит только при первой загрузке списков,
+    // чтобы не сбрасывать состояние при фоновом обновлении.
+    if (isFirstRun) {
+        loadDraft();
+    }
 }
 
 function calcOvertime(startTime, endTime) {
@@ -118,12 +158,11 @@ function preparePreview() {
     };
 
     if (_EDIT_MODE_DATA) {
-        // Используем HTML модальное окно для ввода причины
         showReasonModal((reason) => {
-            if (reason === null) return; // Пользователь нажал отмену
+            if (reason === null) return; 
             if (!reason) {
                 tg.showAlert('Причина обязательна для редактирования.');
-                preparePreview(); // Показываем модалку снова
+                preparePreview(); 
                 return;
             }
             _REPORT.reason = reason;
@@ -168,7 +207,6 @@ function sendReport() {
 }
 
 function setupFormEventListeners() {
-    // Главная кнопка теперь обрабатывается через tg.MainButton.onClick(handleSubmit) в main.js
     const addTrailerBtn = document.getElementById('addTrailerBtn');
     if (addTrailerBtn) addTrailerBtn.addEventListener('click', () => { showOptionalBlock('trailerBlock', 'addTrailerBtn'); saveDraft(); });
     
@@ -188,3 +226,4 @@ function setupFormEventListeners() {
         });
     }
 }
+

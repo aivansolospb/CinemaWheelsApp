@@ -3,10 +3,6 @@
  * @description Логика модального окна профиля, включая регистрацию нового пользователя.
  */
 
-/**
- * НОВАЯ ФУНКЦИЯ: Обрабатывает регистрацию нового пользователя.
- * @param {string} [promptMessage] - Сообщение для prompt-диалога.
- */
 function handleNewUserRegistration(promptMessage) {
     let driverName = prompt(promptMessage || 'Пожалуйста, введите ваше ФИО (это нужно только один раз):', '');
 
@@ -19,7 +15,7 @@ function handleNewUserRegistration(promptMessage) {
                 localStorage.setItem('driverName', driverName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
                 loadProjectHistory();
-                loadDraft(); // Важно загрузить черновик после установки имени
+                loadDraft();
             },
             (err) => { // Ошибка
                 if (err && err.error === 'name_taken') {
@@ -41,22 +37,17 @@ function handleSaveName() {
     const oldName = localStorage.getItem('driverName') || '';
     const newName = document.getElementById('profileNameInput').value.trim();
     if (!newName) {
-        alert('Имя не может быть пустым!');
-        return;
+        return alert('Имя не может быть пустым!');
     }
     if (newName === oldName) {
-        document.getElementById('modalProfile').style.display = 'none';
-        return;
+        return document.getElementById('modalProfile').style.display = 'none';
     }
 
-    resetSaveButton(true); // Блокируем кнопки
+    resetSaveButton(true);
 
     const payload = {
-        oldName: oldName,
-        newName: newName,
-        accessMethod: _ACCESS_METHOD,
-        tgId: _TG_ID,
-        tgUsername: _TG_USERNAME
+        oldName: oldName, newName: newName,
+        accessMethod: _ACCESS_METHOD, tgId: _TG_ID, tgUsername: _TG_USERNAME
     };
 
     const successCallback = (resp) => {
@@ -68,7 +59,7 @@ function handleSaveName() {
         } else {
             alert('Ошибка при обновлении имени: ' + (resp.message || resp.error || 'Неизвестная ошибка'));
         }
-        resetSaveButton(false); // Разблокируем кнопки
+        resetSaveButton(false);
     };
 
     const errorCallback = (err) => {
@@ -77,22 +68,31 @@ function handleSaveName() {
         } else {
             alert('Ошибка сервера при обновлении имени: ' + (err.message || err.toString()));
         }
-        resetSaveButton(false); // Разблокируем кнопки
+        resetSaveButton(false);
     };
 
     callApi('updateDriverName', payload, successCallback, errorCallback);
 }
 
 function setupProfileEventListeners() {
-    document.getElementById('profileBtn').addEventListener('click', () => {
-        document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
-        document.getElementById('modalProfile').style.display = 'flex';
-    });
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
+            document.getElementById('modalProfile').style.display = 'flex';
+        });
+    }
 
-    document.getElementById('cancelNameBtn').addEventListener('click', () => {
-        document.getElementById('modalProfile').style.display = 'none';
-    });
+    const cancelNameBtn = document.getElementById('cancelNameBtn');
+    if (cancelNameBtn) {
+        cancelNameBtn.addEventListener('click', () => {
+            document.getElementById('modalProfile').style.display = 'none';
+        });
+    }
 
-    document.getElementById('saveNameBtn').addEventListener('click', handleSaveName);
+    const saveNameBtn = document.getElementById('saveNameBtn');
+    if (saveNameBtn) {
+        saveNameBtn.addEventListener('click', handleSaveName);
+    }
 }
 

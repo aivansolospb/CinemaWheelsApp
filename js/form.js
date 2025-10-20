@@ -4,12 +4,15 @@
  */
 
 function handleSubmit() {
+    if (tg.MainButton.isVisible && tg.MainButton.isProgressVisible) {
+        return; // Игнорируем клики во время отправки
+    }
     if (_EDIT_MODE_DATA && !hasChanges()) {
-        const hint = document.getElementById('noChangesHint');
-        hint.style.display = 'block';
-        setTimeout(() => {
-            hint.style.display = 'none';
-        }, 2000);
+        tg.showPopup({
+            title: 'Нет изменений',
+            message: 'Вы не внесли никаких изменений в отчет.',
+            buttons: [{type: 'ok'}]
+        });
         return;
     }
     preparePreview();
@@ -51,69 +54,98 @@ function calcOvertime(startTime, endTime) {
     return `${h}:${m.toString().padStart(2, '0')}`;
 }
 
-function preparePreview() {
-    let reason = null;
-    if (_EDIT_MODE_DATA) {
-        reason = prompt("Укажите причину редактирования (max 50 символов):", "");
-        if (reason === null) return;
-        if (reason.trim() === "") return alert("Причина обязательна для редактирования.");
-        reason = reason.trim().substring(0, 50);
-    }
+function showPreviewPopup() {
+    let formattedDate;
+    try { const p = _REPORT.date.split('-'); formattedDate = `${p[2]}.${p[1]}.${p[0].slice(-2)}`; } 
+    catch (e) { formattedDate = _REPORT.date; }
+
+    const overtime = calcOvertime(_REPORT.shiftStart, _REPORT.shiftEnd);
+    const trailerOvertime = (_REPORT.trailer !== 'Нет прицепа') ? calcOvertime(_REPORT.trailerStart, _REPORT.trailerEnd) : '0:00';
     
+    _REPORT.overtime = overtime;
+    _REPORT.trailerOvertime = trailerOvertime;
+
+    const previewItems = [
+        `🗓 ${formattedDate}`, `Водитель: ${_REPORT.driverName}`, `Проект: ${_REPORT.project}`,
+        `Техника: ${_REPORT.tech || '-'}`, _REPORT.trailer !== 'Нет прицепа' ? `Прицеп: ${_REPORT.trailer}` : `Прицеп: нет`,
+        `Адрес: ${_REPORT.address}`, `Смена: ${_REPORT.shiftStart} — ${_REPORT.shiftEnd} (Переработка: ${overtime})`,
+        _REPORT.trailer !== 'Нет прицепа' ? `Смена прицепа: ${_REPORT.trailerStart} — ${_REPORT.trailerEnd} (Переработка: ${trailerOvertime})` : '',
+        (_REPORT.km > 0) ? `Перепробег: ${_REPORT.km} км` : `Перепробег: 0 км`,
+        _REPORT.comment ? `Комментарий: ${_REPORT.comment}` : ''
+    ];
+    if (_REPORT.reason) previewItems.push(`\n❗️ ПРИЧИНА РЕДАКТИРОВАНИЯ:\n${_REPORT.reason}`);
+
+    const message = previewItems.filter(Boolean).join('\n');
+    const buttonText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
+
+    tg.showPopup({
+        title: 'Превью отчёта',
+        message: message,
+        buttons: [
+            {id: 'send', type: 'default', text: buttonText},
+            {id: 'edit', type: 'destructive', text: 'Редактировать'}
+        ]
+    }, (buttonId) => {
+        if (buttonId === 'send') {
+            sendReport();
+        }
+    });
+}
+
+function preparePreview() {
     const form = document.getElementById('reportForm');
     const isTrailerVisible = document.getElementById('trailerBlock').style.display === 'block';
     const isKmVisible = document.getElementById('kmBlock').style.display === 'block';
     const customTrailerTime = document.getElementById('trailerTimeInputs').style.display === 'block';
     const trailer = isTrailerVisible ? form.trailerSelect.value : '';
 
-    if (isTrailerVisible && !trailer) return alert('Вы добавили прицеп, но не выбрали его из списка.');
-    
+    if (isTrailerVisible && !trailer) {
+        return tg.showAlert('Вы добавили прицеп, но не выбрали его из списка.');
+    }
     const trailerStart = (isTrailerVisible && customTrailerTime) ? form.trailerStart.value : (isTrailerVisible ? form.shiftStart.value : '');
     const trailerEnd = (isTrailerVisible && customTrailerTime) ? form.trailerEnd.value : (isTrailerVisible ? form.shiftEnd.value : '');
 
-    if (isTrailerVisible && customTrailerTime && (!trailerStart || !trailerEnd)) return alert('Вы не заполнили время для прицепа.');
+    if (isTrailerVisible && customTrailerTime && (!trailerStart || !trailerEnd)) {
+        return tg.showAlert('Вы не заполнили время для прицепа.');
+    }
 
-    let formattedDate;
-    try { const p = form.date.value.split('-'); formattedDate = `${p[2]}.${p[1]}.${p[0].slice(-2)}`; } 
-    catch (e) { formattedDate = form.date.value; }
-
-    const overtime = calcOvertime(form.shiftStart.value, form.shiftEnd.value);
-    const trailerOvertime = (isTrailerVisible && trailer) ? calcOvertime(trailerStart, trailerEnd) : '0:00';
-    const comment = form.comment.value.trim();
-
-    const previewItems = [
-        `🗓 ${formattedDate}`, `Водитель: ${localStorage.getItem('driverName')}`, `Проект: ${form.project.value}`,
-        `Техника: ${form.techSelect.value || '-'}`, trailer ? `Прицеп: ${trailer}` : `Прицеп: нет`,
-        `Адрес: ${form.address.value}`, `Смена: ${form.shiftStart.value} — ${form.shiftEnd.value} (Переработка: ${overtime})`,
-        trailer ? `Смена прицепа: ${trailerStart} — ${trailerEnd} (Переработка: ${trailerOvertime})` : '',
-        (isKmVisible && form.km.value > 0) ? `Перепробег: ${form.km.value} км` : `Перепробег: 0 км`,
-        comment ? `Комментарий: ${comment}` : ''
-    ];
-    if (reason) previewItems.push(`\n❗️ ПРИЧИНА РЕДАКТИРОВАНИЯ:\n${reason}`);
-
-    document.getElementById('modalPreviewText').innerText = previewItems.filter(Boolean).join('\n');
-    
     _REPORT = {
         date: form.date.value, driverName: localStorage.getItem('driverName'), tgId: _TG_ID, tgUsername: _TG_USERNAME,
         project: form.project.value, tech: form.techSelect.value, trailer: trailer || 'Нет прицепа', address: form.address.value,
-        shiftStart: form.shiftStart.value, shiftEnd: form.shiftEnd.value, overtime,
-        trailerStart, trailerEnd, trailerOvertime,
+        shiftStart: form.shiftStart.value, shiftEnd: form.shiftEnd.value,
+        trailerStart, trailerEnd,
         km: (isKmVisible ? form.km.value : 0) || 0,
-        comment: comment,
+        comment: form.comment.value.trim(),
         isEdit: !!_EDIT_MODE_DATA,
-        reason: reason,
         oldRowNumber: _EDIT_MODE_DATA?.rowNumber,
         oldMessageId: _EDIT_MODE_DATA?.messageId,
     };
 
-    document.getElementById('modalPreview').style.display = 'flex';
-    resetSendButton();
+    if (_EDIT_MODE_DATA) {
+        tg.showPopup({
+            title: 'Причина редактирования',
+            message: 'Пожалуйста, укажите причину внесения изменений (до 50 символов).',
+            buttons: [{id: 'save', type: 'default', text: 'Сохранить'}],
+            inputs: [{placeholder: 'Например: исправил опечатку в адресе'}]
+        }, (btn, inputs) => {
+            const reason = inputs[0]?.trim();
+            if (btn === 'save') {
+                if (!reason) {
+                    tg.showAlert('Причина обязательна для редактирования.');
+                    return;
+                }
+                _REPORT.reason = reason.substring(0, 50);
+                showPreviewPopup();
+            }
+        });
+    } else {
+        showPreviewPopup();
+    }
 }
 
 function sendReport() {
-    document.getElementById('sendBtn').disabled = true;
-    document.getElementById('editBtn').disabled = true;
-    document.getElementById('sendBtn').innerText = 'Отправка...';
+    tg.MainButton.showProgress();
+    tg.MainButton.disable();
 
     const action = _REPORT.isEdit ? 'submitEdit' : 'submitReport';
     const payload = _REPORT.isEdit ? {
@@ -127,25 +159,24 @@ function sendReport() {
         (resp) => { // success
             if (resp && resp.status === 'ok') {
                 saveProjectHistory(_REPORT.project);
-                localStorage.removeItem(DRAFT_KEY);
+                localStorage.removeItem('reportDraft');
                 if (_REPORT.isEdit) cancelEdit(false);
                 tg.close();
             } else {
-                alert('Ошибка при отправке: ' + JSON.stringify(resp));
-                resetSendButton();
+                tg.showAlert('Ошибка при отправке: ' + JSON.stringify(resp));
+                tg.MainButton.hideProgress();
+                tg.MainButton.enable();
             }
         },
         (err) => { // error
-            alert('Ошибка сервера: ' + (err.message || err.toString()));
-            resetSendButton();
+            tg.showAlert('Ошибка сервера: ' + (err.message || err.toString()));
+            tg.MainButton.hideProgress();
+            tg.MainButton.enable();
         }
     );
 }
 
 function setupFormEventListeners() {
-    const sendBtn = document.getElementById('sendBtn');
-    if (sendBtn) sendBtn.addEventListener('click', sendReport);
-
     const addTrailerBtn = document.getElementById('addTrailerBtn');
     if (addTrailerBtn) addTrailerBtn.addEventListener('click', () => { showOptionalBlock('trailerBlock', 'addTrailerBtn'); saveDraft(); });
     
@@ -165,4 +196,3 @@ function setupFormEventListeners() {
         });
     }
 }
-

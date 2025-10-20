@@ -25,14 +25,24 @@ function showEditList(data) {
         listEl.innerHTML = '<div class="loading-text">Нет доступных отчетов для редактирования.</div>';
         return;
     }
+
+    // НОВЫЙ БЛОК: Массив с названиями месяцев для красивого отображения
+    const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     
     reports.forEach(report => {
         const btn = document.createElement('button');
         btn.className = 'edit-report-item';
         
-        // ИЗМЕНЕНО (Фикс бага "undefined")
-        // Берем дату YYYY-MM-DD, отрезаем последние 5 символов (MM-DD) и меняем "-" на "." => DD.MM
-        const displayDate = report.date.slice(5).replace('-', '.');
+        // ИЗМЕНЕНО: Логика форматирования даты в "ДД.мес"
+        let displayDate = '??.??';
+        try {
+            const parts = report.date.split('-'); // Разбираем дату YYYY-MM-DD
+            const day = parts[2];
+            const monthIndex = parseInt(parts[1], 10) - 1; // Месяцы в JS с 0
+            displayDate = `${day}.${monthNames[monthIndex]}`;
+        } catch (e) { 
+            // Оставляем ?? если формат даты неожиданный
+        }
         
         btn.innerText = `[${displayDate}] ${report.project} (${report.tech})`;
         btn.title = `Адрес: ${report.address}\nСмена: ${report.shiftStart}-${report.shiftEnd}`;
@@ -42,7 +52,6 @@ function showEditList(data) {
 }
 
 function selectReportForEdit(report) {
-    // Сохраняем весь объект отчета
     _EDIT_MODE_DATA = { ...report };
     
     document.getElementById('date').value = report.date; 

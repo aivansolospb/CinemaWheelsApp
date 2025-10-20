@@ -8,11 +8,19 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+    <!-- 
+      Кнопка "Профиль" остается, так как для нее нет прямого
+      нативного аналога в виде постоянного элемента, кроме кнопок меню.
+    -->
     <button type="button" id="profileBtn" class="profile-btn">👤</button>
 
   <h2>Отчёт о смене</h2>
   <h3 id="driverNameDisplay"></h3>
 
+  <!-- 
+    Из HTML удалены все модальные окна и основная кнопка отправки.
+    Они будут заменены на tg.showPopup() и tg.MainButton.
+  -->
   <form id="reportForm" onsubmit="event.preventDefault(); handleSubmit();">
     <label>Дата</label>
     <input type="date" id="date" required>
@@ -65,67 +73,19 @@
        </div>
        <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
     </div>
-    <button type="submit" id="submitBtn">Показать превью</button>
     
-    <div id="noChangesHint" style="display: none; text-align: center; color: var(--hint-color); margin-top: 8px; font-size: 0.9em;">
-      Изменений не внесено
-    </div>
-    
-    <div id="cancelEditBtnContainer"></div>
+    <!-- Контейнер для кнопки отмены редактирования остался, кнопка будет создаваться динамически -->
+    <div id="cancelEditBtnContainer" style="margin-top: 16px;"></div>
   </form>
 
-  <div id="modalPreview" class="modal-overlay">
-    <div class="modal-content">
-      <h3>Превью отчёта</h3>
-      <div id="modalPreviewText" class="preview"></div>
-      <div class="modal-actions">
-        <button type="button" id="editBtn" class="btn-secondary">Редактировать</button>
-        <button type="button" id="sendBtn" class="btn-primary">Отправить отчет</button>
-      </div>
-    </div>
-  </div>
-  
-  <div id="modalProfile" class="modal-overlay">
-    <div class="modal-content">
-      <h3>Профиль водителя</h3>
-      <label for="profileNameInput">Ваше ФИО</label>
-      <input type="text" id="profileNameInput" placeholder="Введите ваше ФИО">
-      <p style="font-size: 0.9em; color: var(--hint-color); margin-top: 8px;">
-        При изменении, имя будет обновлено во всех ваших прошлых отчетах.
-      </p>
-      
-      <button type="button" id="loadEditsBtn" class="toggle-btn" style="margin-top: 16px; margin-bottom: 8px;">
-        Редактировать прошлую смену
-      </button>
-      
-      <div class="modal-actions">
-        <button type="button" id="cancelNameBtn" class="btn-secondary">Отмена</button>
-        <button type="button" id="saveNameBtn" class="btn-primary">Сохранить</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalEditList" class="modal-overlay">
-    <div class="modal-content">
-      <h3>Выберите отчёт для редактирования</h3>
-      <div id="editListContainer">
-        <div class="loading-text">Загрузка...</div>
-      </div>
-      <div class="modal-actions" style="margin-top: 10px;">
-        <button type="button" id="cancelEditListBtn" class="btn-secondary" style="width: 100%;">Отмена</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Scripts -->
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/draft.js"></script>
-  <script src="js/history.js"></script>
-  <script src="js/profile.js"></script>
-  <script src="js/edit.js"></script>
-  <script src="js/form.js"></script>
-  <script src="js/main.js"></script>
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
+  <script src="draft.js"></script>
+  <script src="history.js"></script>
+  <script src="profile.js"></script>
+  <script src="edit.js"></script>
+  <script src="form.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
-

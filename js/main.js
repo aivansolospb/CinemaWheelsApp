@@ -11,35 +11,18 @@ let _TG_USERNAME = '';
 let _EDIT_MODE_DATA = null;
 let _REPORT = {};
 
-// --- Инициализация TWA и темы ---
-function initTelegramWebApp() {
-    try {
-        tg.ready();
-        tg.expand();
-        document.documentElement.style.colorScheme = tg.colorScheme;
-        tg.onEvent('themeChanged', () => {
-            document.documentElement.style.colorScheme = tg.colorScheme;
-        });
-
-        // Настройка главной кнопки
-        tg.MainButton.setText('Показать превью');
-        tg.MainButton.onClick(handleSubmit);
-        tg.MainButton.show();
-    } catch (e) {
-        console.error('Telegram WebApp script error', e);
-        // Fallback для браузера, где нет tg
-        const form = document.getElementById('reportForm');
-        const btn = document.createElement('button');
-        btn.type = 'submit';
-        btn.innerText = 'Показать превью (Браузер)';
-        form.appendChild(btn);
-    }
-}
-
 // --- Логирование и аутентификация ---
 function logAndAuth() {
-    const user = tg.initDataUnsafe?.user || {id: 'test_user_id', username: 'test_user'};
-    _ACCESS_METHOD = tg.initDataUnsafe?.user ? 'Telegram' : 'Browser (Direct Link)';
+    // Используем более надежный способ получения данных пользователя
+    const user = tg.initDataUnsafe?.user || tg.initData?.user || null;
+    
+    if (!user) {
+        document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Не удалось получить данные пользователя. Пожалуйста, откройте приложение через Telegram.</p></div>';
+        tg.close();
+        return;
+    }
+
+    _ACCESS_METHOD = 'Telegram';
     _TG_ID = user.id || '';
     _TG_USERNAME = user.username || '';
 
@@ -70,13 +53,33 @@ function loadReferenceLists() {
 
 // --- Основной запуск приложения ---
 document.addEventListener('DOMContentLoaded', () => {
-    initTelegramWebApp();
-    logAndAuth();
-    loadReferenceLists();
+    try {
+        tg.ready();
+        tg.expand();
+        
+        document.documentElement.style.colorScheme = tg.colorScheme;
+        tg.onEvent('themeChanged', () => {
+            document.documentElement.style.colorScheme = tg.colorScheme;
+        });
 
-    setupFormEventListeners();
-    setupProfileEventListeners();
-    
-    document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-    loadDraft();
+        // Настройка главной кнопки
+        tg.MainButton.setText('Показать превью');
+        tg.MainButton.onClick(handleSubmit);
+        tg.MainButton.show();
+
+        // Основная логика запускается после инициализации Telegram
+        logAndAuth();
+        loadReferenceLists();
+
+        setupFormEventListeners();
+        setupModalEventListeners();
+        setupProfileEventListeners();
+        
+        document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+        loadDraft();
+
+    } catch (e) {
+        console.error('Ошибка инициализации Telegram WebApp:', e);
+        document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Это приложение предназначено для работы внутри Telegram.</p></div>';
+    }
 });

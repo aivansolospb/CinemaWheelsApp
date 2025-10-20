@@ -3,9 +3,6 @@
  * @description Логика для режима редактирования прошлых отчетов.
  */
 
-/**
- * Загружает последние 10 отчетов пользователя для редактирования.
- */
 function loadLastTenReports() {
     document.getElementById('modalProfile').style.display = 'none';
     
@@ -19,10 +16,6 @@ function loadLastTenReports() {
     });
 }
 
-/**
- * Отображает список отчетов в модальном окне.
- * @param {object} data - Данные с сервера, содержащие список отчетов.
- */
 function showEditList(data) {
     const reports = data.reports;
     const listEl = document.getElementById('editListContainer');
@@ -39,11 +32,11 @@ function showEditList(data) {
         
         let date = report.date;
         try { 
-            const dateOnly = report.date.split('T')[0]; // "YYYY-MM-DD"
-            const parts = dateOnly.split('-'); // ["YYYY", "MM", "DD"]
-            date = `${parts[2]}.${parts[1]}`; // "DD.MM"
+            const dateOnly = report.date.split('T')[0]; // YYYY-MM-DD
+            const parts = dateOnly.split('-'); // [YYYY, MM, DD]
+            date = `${parts[2]}.${parts[1]}`; // DD.MM
         } catch (e) {
-            date = "??.??"; // На случай ошибки
+            date = "??.??"; 
         }
         
         btn.innerText = `[${date}] ${report.project} (${report.tech})`;
@@ -53,19 +46,13 @@ function showEditList(data) {
     });
 }
 
-/**
- * Выбирает отчет, заполняет форму и переходит в режим редактирования.
- * @param {object} report - Объект с данными выбранного отчета.
- */
 function selectReportForEdit(report) {
-    _EDIT_MODE_DATA = {
-        rowNumber: report.rowNumber,
-        messageId: report.messageId
-    };
+    // ИЗМЕНЕНО (Фикс Бага 5): Сохраняем весь объект отчета
+    _EDIT_MODE_DATA = { ...report };
     
     let formattedDate = report.date;
     try {
-        formattedDate = report.date.split('T')[0];
+        formattedDate = report.date.split('T')[0]; // "YYYY-MM-DD"
     } catch(e) { /* Оставляем как есть */ }
     document.getElementById('date').value = formattedDate; 
     
@@ -115,13 +102,12 @@ function selectReportForEdit(report) {
         showOptionalBlock('commentBlock', 'addCommentBtn');
         document.getElementById('comment').value = report.comment;
     } else {
-        document.getElementById('comment').value = '';
+         document.getElementById('comment').value = '';
     }
     
     document.getElementById('modalEditList').style.display = 'none';
     document.getElementById('submitBtn').innerText = 'Показать превью (Редактирование)';
     
-    // Добавление кнопки отмены
     const cancelContainer = document.getElementById('cancelEditBtnContainer');
     if (!document.getElementById('cancelEditBtn')) {
         const cancelBtn = document.createElement('button');
@@ -136,10 +122,6 @@ function selectReportForEdit(report) {
     window.scrollTo(0, 0);
 }
 
-/**
- * Отменяет режим редактирования и сбрасывает форму.
- * @param {boolean} [showAlert=true] - Показывать ли alert об отмене.
- */
 function cancelEdit(showAlert = true) {
     if (!_EDIT_MODE_DATA) {
         if (!showAlert) return;
@@ -148,7 +130,6 @@ function cancelEdit(showAlert = true) {
     _EDIT_MODE_DATA = null;
     document.getElementById('reportForm').reset();
     
-    // Скрытие опциональных блоков
     document.getElementById('trailerBlock').style.display = 'none';
     document.getElementById('addTrailerBtn').style.display = 'block';
     document.getElementById('trailerTimeInputs').style.display = 'none';
@@ -158,7 +139,7 @@ function cancelEdit(showAlert = true) {
     document.getElementById('commentBlock').style.display = 'none';
     document.getElementById('addCommentBtn').style.display = 'block';
     
-    loadDraft(); // Загружаем последний черновик
+    loadDraft(); 
     
     document.getElementById('submitBtn').innerText = 'Показать превью';
     
@@ -168,9 +149,6 @@ function cancelEdit(showAlert = true) {
     if (showAlert) alert('Редактирование отменено.');
 }
 
-/**
- * Устанавливает слушатели событий для режима редактирования.
- */
 function setupEditEventListeners() {
     document.getElementById('loadEditsBtn').addEventListener('click', loadLastTenReports);
 }

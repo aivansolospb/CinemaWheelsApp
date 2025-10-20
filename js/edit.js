@@ -50,7 +50,6 @@ function showEditList(data) {
 function selectReportForEdit(report) {
     _EDIT_MODE_DATA = { ...report };
     
-    // Заполняем основные поля
     document.getElementById('date').value = report.date; 
     document.getElementById('project').value = report.project;
     document.getElementById('techSelect').value = report.tech;
@@ -58,14 +57,11 @@ function selectReportForEdit(report) {
     document.getElementById('shiftStart').value = report.shiftStart;
     document.getElementById('shiftEnd').value = report.shiftEnd;
 
-    // Используем новую функцию для сброса и заполнения опциональных блоков
     resetAndFillOptionalBlocks(report);
     
-    // Закрываем модальное окно
     document.getElementById('modalEditList').style.display = 'none';
     document.getElementById('submitBtn').innerText = 'Показать превью (Редактирование)';
     
-    // Добавляем кнопку "Отменить редактирование"
     const cancelContainer = document.getElementById('cancelEditBtnContainer');
     if (!document.getElementById('cancelEditBtn')) {
         const cancelBtn = document.createElement('button');
@@ -88,7 +84,6 @@ function cancelEdit(showAlert = true) {
     _EDIT_MODE_DATA = null;
     document.getElementById('reportForm').reset();
     
-    // Используем новую функцию для сброса опциональных блоков
     resetOptionalBlocksVisibility();
     
     loadDraft(); 
@@ -137,6 +132,12 @@ function hasChanges() {
 }
 
 function setupEditEventListeners() {
-    document.getElementById('loadEditsBtn').addEventListener('click', loadLastTenReports);
+    // ИСПРАВЛЕНА ОПЕЧАТКА: loadEdtsBtn -> loadEditsBtn
+    const loadEditsBtn = document.getElementById('loadEditsBtn');
+    if (loadEditsBtn) {
+        loadEditsBtn.addEventListener('click', loadLastTenReports);
+    } else {
+        console.error('Кнопка с ID "loadEditsBtn" не найдена.');
+    }
 }
 

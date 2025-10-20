@@ -43,18 +43,24 @@
           <input type="time" id="trailerEnd">
         </div>
       </div>
+      <!-- НОВАЯ КНОПКА -->
+      <button type="button" class="remove-btn" onclick="hideOptionalBlock('trailerBlock', 'addTrailerBtn')">Убрать прицеп</button>
     </div>
     <button type="button" id="addKmBtn" class="toggle-btn">+ Добавить перепробег</button>
     <div id="kmBlock" style="display:none;">
        <hr>
        <label>Перепробег (км)</label>
        <input type="number" id="km" min="0" step="1" value="0">
+       <!-- НОВАЯ КНОПКА -->
+       <button type="button" class="remove-btn" onclick="hideOptionalBlock('kmBlock', 'addKmBtn')">Убрать перепробег</button>
     </div>
     <button type="button" id="addCommentBtn" class="toggle-btn">+ Добавить комментарий</button>
     <div id="commentBlock" style="display:none;">
        <hr>
        <label>Комментарий</label>
        <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
+       <!-- НОВАЯ КНОПКА -->
+       <button type="button" class="remove-btn" onclick="hideOptionalBlock('commentBlock', 'addCommentBtn')">Убрать комментарий</button>
     </div>
     <button type="submit" id="submitBtn">Показать превью</button>
     

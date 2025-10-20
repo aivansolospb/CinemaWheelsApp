@@ -30,16 +30,11 @@ function showEditList(data) {
         const btn = document.createElement('button');
         btn.className = 'edit-report-item';
         
-        let date = report.date;
-        try { 
-            const dateOnly = report.date.split('T')[0]; // YYYY-MM-DD
-            const parts = dateOnly.split('-'); // [YYYY, MM, DD]
-            date = `${parts[2]}.${parts[1]}`; // DD.MM
-        } catch (e) {
-            date = "??.??"; 
-        }
+        // ИЗМЕНЕНО (Фикс бага "undefined")
+        // Берем дату YYYY-MM-DD, отрезаем последние 5 символов (MM-DD) и меняем "-" на "." => DD.MM
+        const displayDate = report.date.slice(5).replace('-', '.');
         
-        btn.innerText = `[${date}] ${report.project} (${report.tech})`;
+        btn.innerText = `[${displayDate}] ${report.project} (${report.tech})`;
         btn.title = `Адрес: ${report.address}\nСмена: ${report.shiftStart}-${report.shiftEnd}`;
         btn.onclick = () => selectReportForEdit(report);
         listEl.appendChild(btn);
@@ -47,15 +42,10 @@ function showEditList(data) {
 }
 
 function selectReportForEdit(report) {
-    // ИЗМЕНЕНО (Фикс Бага 5): Сохраняем весь объект отчета
+    // Сохраняем весь объект отчета
     _EDIT_MODE_DATA = { ...report };
     
-    let formattedDate = report.date;
-    try {
-        formattedDate = report.date.split('T')[0]; // "YYYY-MM-DD"
-    } catch(e) { /* Оставляем как есть */ }
-    document.getElementById('date').value = formattedDate; 
-    
+    document.getElementById('date').value = report.date; 
     document.getElementById('project').value = report.project;
     document.getElementById('techSelect').value = report.tech;
     document.getElementById('address').value = report.address;
@@ -152,3 +142,4 @@ function cancelEdit(showAlert = true) {
 function setupEditEventListeners() {
     document.getElementById('loadEditsBtn').addEventListener('click', loadLastTenReports);
 }
+

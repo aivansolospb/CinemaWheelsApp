@@ -47,7 +47,7 @@ function handleSaveName() {
 }
 
 function clearCacheAndReload() {
-    tg.showConfirm("Вы уверены, что хотите очистить все данные?", (isOk) => {
+    showConfirmModal("Подтверждение", "Вы уверены, что хотите очистить все данные? Это действие приведет к повторной регистрации.", (isOk) => {
         if (isOk) {
             localStorage.clear();
             window.location.reload();
@@ -72,7 +72,6 @@ function setupProfileEventListeners() {
         loadLastTenReports();
     });
 
-    // --- Кнопка Очистки Кэша ---
     const adminPanel = document.getElementById('admin-panel');
     if (SHOW_ADMIN_FEATURES) {
         adminPanel.style.display = 'block';

@@ -70,19 +70,29 @@
     <div id="cancelEditBtnContainer"></div>
   </form>
 
+  <!-- MODAL WINDOWS -->
+
+  <div id="modalPreview" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Превью отчёта</h3>
+      <div id="modalPreviewText" class="preview"></div>
+      <div class="modal-actions">
+        <button type="button" id="editBtn" class="btn-secondary">Редактировать</button>
+        <button type="button" id="sendBtn" class="btn-primary">Отправить отчет</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modalProfile" class="modal-overlay">
     <div class="modal-content">
         <div id="profileMenu">
             <h3>Профиль водителя</h3>
             <button type="button" id="changeNameMenuBtn" class="toggle-btn">Изменить ФИО</button>
             <button type="button" id="loadEditsBtn" class="toggle-btn">Редактировать смену</button>
-            
-            <!-- Панель администратора -->
             <div id="admin-panel">
                 <hr>
                 <button type="button" id="clearCacheBtn" class="toggle-btn-danger">Очистить кэш и выйти</button>
             </div>
-            
             <div class="modal-actions" style="margin-top: 20px;">
                 <button type="button" id="closeProfileBtn" class="btn-secondary" style="width: 100%;">Закрыть</button>
             </div>
@@ -124,8 +134,19 @@
       </div>
     </div>
   </div>
+
+  <div id="modalConfirm" class="modal-overlay">
+    <div class="modal-content">
+      <h3 id="confirmTitle">Подтверждение</h3>
+      <p id="confirmText" style="margin: 10px 0;"></p>
+      <div class="modal-actions">
+        <button type="button" id="confirmCancelBtn" class="btn-secondary">Отмена</button>
+        <button type="button" id="confirmOkBtn" class="btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
   
-  <!-- Scripts -->
+  <!-- SCRIPTS -->
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/draft.js"></script>

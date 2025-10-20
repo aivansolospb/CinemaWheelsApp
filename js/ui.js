@@ -3,8 +3,12 @@
  * @description Логика для управления элементами UI (модальные окна, блоки).
  */
 
-// --- Управление модальными окнами ---
 function setupModalEventListeners() {
+    document.getElementById('editBtn').addEventListener('click', () => {
+        document.getElementById('modalPreview').style.display = 'none';
+    });
+    document.getElementById('sendBtn').addEventListener('click', sendReport);
+    
     document.getElementById('cancelEditListBtn').addEventListener('click', () => {
         document.getElementById('modalEditList').style.display = 'none';
     });
@@ -16,10 +20,38 @@ function setupModalEventListeners() {
     document.getElementById('submitReasonBtn').addEventListener('click', () => {
         const reason = document.getElementById('reasonInput').value.trim();
         document.getElementById('modalReason').style.display = 'none';
-        if (window.reasonCallback) {
-            window.reasonCallback(reason);
-        }
+        if (window.reasonCallback) window.reasonCallback(reason);
     });
+
+    document.getElementById('confirmCancelBtn').addEventListener('click', hideConfirmModal);
+}
+
+function resetSendButton() {
+    const sendBtn = document.getElementById('sendBtn');
+    const editBtn = document.getElementById('editBtn');
+    sendBtn.disabled = false;
+    sendBtn.innerText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
+    editBtn.disabled = false;
+}
+
+function showConfirmModal(title, text, callback) {
+    document.getElementById('confirmTitle').innerText = title;
+    document.getElementById('confirmText').innerText = text;
+    document.getElementById('modalConfirm').style.display = 'flex';
+
+    const okBtn = document.getElementById('confirmOkBtn');
+    const handler = (isOk) => {
+        hideConfirmModal();
+        callback(isOk);
+        okBtn.replaceWith(okBtn.cloneNode(true)); // Remove event listener
+    };
+    
+    okBtn.addEventListener('click', () => handler(true), { once: true });
+    document.getElementById('confirmCancelBtn').addEventListener('click', () => handler(false), { once: true });
+}
+
+function hideConfirmModal() {
+    document.getElementById('modalConfirm').style.display = 'none';
 }
 
 function showReasonModal(callback) {
@@ -60,7 +92,6 @@ function showProfileChangeNameUI() {
     document.getElementById('cancelNameBtn').innerText = 'Отмена';
 }
 
-// --- Управление опциональными блоками ---
 function showOptionalBlock(blockId, btnId) {
     document.getElementById(blockId).style.display = 'block';
     document.getElementById(btnId).style.display = 'none';

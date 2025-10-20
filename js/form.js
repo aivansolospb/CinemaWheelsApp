@@ -53,11 +53,9 @@ function setupFormValidationListeners() {
             if(el.classList.contains('required-field')) {
                 updateFormValidationState();
             }
-            // Сохраняем черновик при любом изменении
             saveDraft();
         });
     });
-    // Первичная проверка при загрузке
     updateFormValidationState();
 }
 
@@ -85,7 +83,7 @@ function populateLists(data) {
     trSel.value = currentTrailer;
     if (isFirstRun) {
         loadDraft();
-        updateFormValidationState(); // Проверяем валидность после загрузки черновика
+        updateFormValidationState();
     }
 }
 
@@ -117,13 +115,11 @@ function showPreviewPopup() {
         _REPORT.trailer !== 'Нет прицепа' ? `🕔 Смена прицепа: ${_REPORT.trailerStart} — ${_REPORT.trailerEnd} (Переработка: ${_REPORT.trailerOvertime})` : null,
         (_REPORT.km > 0) ? `🛣 Перепробег: ${_REPORT.km} км` : null, _REPORT.comment ? `💬 Комментарий: ${_REPORT.comment}` : null
     ];
-    if (_REPORT.reason) items.push(`\n❗️ <b>Причина:</b> ${_REPORT.reason}`);
-    const message = items.filter(Boolean).join('\n');
+    if (_REPORT.reason) items.push(`\n❗️ Причина: ${_REPORT.reason}`);
     
-    tg.showPopup({
-        title: 'Превью отчёта', message: message.replace(/</g, '&lt;').replace(/>/g, '&gt;'),
-        buttons: [ {id: 'send', type: 'default', text: _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет'}, {id: 'edit', type: 'destructive', text: 'Редактировать'} ]
-    }, (id) => { if (id === 'send') sendReport(); });
+    document.getElementById('modalPreviewText').innerText = items.filter(Boolean).join('\n');
+    document.getElementById('modalPreview').style.display = 'flex';
+    resetSendButton();
 }
 
 function preparePreview() {
@@ -156,7 +152,12 @@ function preparePreview() {
 }
 
 function sendReport() {
-    tg.MainButton.showProgress().disable();
+    const sendBtn = document.getElementById('sendBtn');
+    const editBtn = document.getElementById('editBtn');
+    sendBtn.disabled = true;
+    sendBtn.innerText = 'Отправка...';
+    editBtn.disabled = true;
+
     const action = _REPORT.isEdit ? 'submitEdit' : 'submitReport';
     const payload = _REPORT.isEdit ? { oldRowNumber: _REPORT.oldRowNumber, oldMessageId: _REPORT.oldMessageId, reason: _REPORT.reason, reportData: _REPORT } : _REPORT;
 
@@ -169,12 +170,12 @@ function sendReport() {
                 tg.close();
             } else {
                 tg.showAlert('Ошибка: ' + JSON.stringify(resp));
-                tg.MainButton.hideProgress().enable();
+                resetSendButton();
             }
         },
         (err) => {
             tg.showAlert('Ошибка сервера: ' + (err.message || err.toString()));
-            tg.MainButton.hideProgress().enable();
+            resetSendButton();
         }
     );
 }
@@ -190,3 +191,4 @@ function setupFormEventListeners() {
         saveDraft(); 
     });
 }
+

@@ -3,22 +3,15 @@
  * @description Логика основной формы: расчеты, подготовка превью, отправка данных.
  */
 
-/**
- * НОВАЯ ФУНКЦИЯ: Точка входа для отправки формы.
- * Проверяет, есть ли изменения, перед тем как показать превью.
- */
 function handleSubmit() {
-    // Если мы в режиме редактирования и изменений нет
     if (_EDIT_MODE_DATA && !hasChanges()) {
         const hint = document.getElementById('noChangesHint');
         hint.style.display = 'block';
-        // Прячем подсказку через 2 секунды
         setTimeout(() => {
             hint.style.display = 'none';
         }, 2000);
-        return; // Прерываем выполнение
+        return;
     }
-    // Если изменения есть или это новый отчет, показываем превью
     preparePreview();
 }
 
@@ -27,19 +20,15 @@ function populateLists(data) {
     const trSel = document.getElementById('trailerSelect');
     
     tSel.innerHTML = '<option value="">— выберите технику —</option>';
-    (data && data.tech || []).forEach(x => { 
+    (data.tech || []).forEach(x => { 
         const o = document.createElement('option'); 
-        o.value = x; 
-        o.text = x; 
-        tSel.appendChild(o); 
+        o.value = x; o.text = x; tSel.appendChild(o); 
     });
     
     trSel.innerHTML = '<option value="">— выберите прицеп —</option>';
-    (data && data.trailer || []).forEach(x => { 
+    (data.trailer || []).forEach(x => { 
         const o = document.createElement('option'); 
-        o.value = x; 
-        o.text = x; 
-        trSel.appendChild(o); 
+        o.value = x; o.text = x; trSel.appendChild(o); 
     });
     
     loadDraft();
@@ -64,38 +53,64 @@ function preparePreview() {
     let reason = null;
     if (_EDIT_MODE_DATA) {
         reason = prompt("Укажите причину редактирования (max 50 символов):", "");
-        if (!reason || reason.trim() === "") {
-            alert("Причина обязательна для редактирования. Отмена.");
+        if (reason === null) return; // Пользователь нажал "Отмена"
+        if (reason.trim() === "") {
+            alert("Причина обязательна для редактирования.");
             return;
         }
         reason = reason.trim().substring(0, 50);
     }
-
-    const reportData = getFormData();
     
-    if (reportData.isTrailerVisible && !reportData.trailer) {
-        alert('Вы добавили блок "Прицеп", но не выбрали прицеп из списка.');
-        return;
-    }
-    if (reportData.isTrailerVisible && reportData.customTrailerTime && (!reportData.trailerStart || !reportData.trailerEnd)) {
-        alert('Вы указали, что время прицепа отличается, но не заполнили поля "Начало / Конец" для него.');
-        return;
-    }
+    const form = document.getElementById('reportForm');
+    const isTrailerVisible = document.getElementById('trailerBlock').style.display === 'block';
+    const isKmVisible = document.getElementById('kmBlock').style.display === 'block';
+    const isCommentVisible = document.getElementById('commentBlock').style.display === 'block';
+    const customTrailerTime = document.getElementById('trailerTimeInputs').style.display === 'block';
+    const trailer = isTrailerVisible ? form.trailerSelect.value : '';
+    const trailerStart = (isTrailerVisible && customTrailerTime) ? form.trailerStart.value : (isTrailerVisible ? form.shiftStart.value : '');
+    const trailerEnd = (isTrailerVisible && customTrailerTime) ? form.trailerEnd.value : (isTrailerVisible ? form.shiftEnd.value : '');
 
-    const previewText = generatePreviewText(reportData, reason);
-    document.getElementById('modalPreviewText').innerText = previewText;
+    if (isTrailerVisible && !trailer) { return alert('Вы добавили прицеп, но не выбрали его из списка.'); }
+    if (isTrailerVisible && customTrailerTime && (!trailerStart || !trailerEnd)) { return alert('Вы не заполнили время для прицепа.'); }
+
+    let formattedDate;
+    try { const p = form.date.value.split('-'); formattedDate = `${p[2]}.${p[1]}.${p[0].slice(-2)}`; } 
+    catch (e) { formattedDate = form.date.value; }
+
+    const overtime = calcOvertime(form.shiftStart.value, form.shiftEnd.value);
+    const trailerOvertime = (isTrailerVisible && trailer) ? calcOvertime(trailerStart, trailerEnd) : '0:00';
+
+    const previewItems = [
+        `🗓 ${formattedDate}`, `Водитель: ${localStorage.getItem('driverName')}`, `Проект: ${form.project.value}`,
+        `Техника: ${form.techSelect.value || '-'}`, trailer ? `Прицеп: ${trailer}` : `Прицеп: нет`,
+        `Адрес: ${form.address.value}`, `Смена: ${form.shiftStart.value} — ${form.shiftEnd.value} (Переработка: ${overtime})`,
+        trailer ? `Смена прицепа: ${trailerStart} — ${trailerEnd} (Переработка: ${trailerOvertime})` : '',
+        (isKmVisible && form.km.value > 0) ? `Перепробег: ${form.km.value} км` : `Перепробег: 0 км`,
+        (isCommentVisible && form.comment.value.trim()) ? `Комментарий: ${form.comment.value.trim()}` : ''
+    ];
+    if (reason) previewItems.push(`\n❗️ ПРИЧИНА РЕДАКТИРОВАНИЯ:\n${reason}`);
+
+    document.getElementById('modalPreviewText').innerText = previewItems.filter(Boolean).join('\n');
     
-    _REPORT = createReportObject(reportData, reason);
+    _REPORT = {
+        date: form.date.value, driverName: localStorage.getItem('driverName'), tgId: _TG_ID, tgUsername: _TG_USERNAME,
+        project: form.project.value, tech: form.techSelect.value, trailer: trailer || 'Нет прицепа', address: form.address.value,
+        shiftStart: form.shiftStart.value, shiftEnd: form.shiftEnd.value, overtime,
+        trailerStart, trailerEnd, trailerOvertime,
+        km: (isKmVisible ? form.km.value : 0) || 0,
+        comment: (isCommentVisible ? form.comment.value.trim() : ''),
+        accessMethod: _ACCESS_METHOD,
+        isEdit: !!_EDIT_MODE_DATA,
+        reason: reason,
+        oldRowNumber: _EDIT_MODE_DATA?.rowNumber,
+        oldMessageId: _EDIT_MODE_DATA?.messageId,
+    };
 
     document.getElementById('modalPreview').style.display = 'flex';
-    document.getElementById('sendBtn').disabled = false;
-    document.getElementById('editBtn').disabled = false;
-    document.getElementById('sendBtn').innerText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
+    resetSendButton();
 }
 
 function sendReport() {
-    // УДАЛЕНО: Старая проверка на изменения. Теперь она в handleSubmit.
-
     document.getElementById('sendBtn').disabled = true;
     document.getElementById('editBtn').disabled = true;
     document.getElementById('sendBtn').innerText = 'Отправка...';
@@ -104,39 +119,34 @@ function sendReport() {
         if (resp && resp.status === 'ok') {
             saveProjectHistory(_REPORT.project);
             localStorage.removeItem(DRAFT_KEY);
-            cancelEdit(false);
+            if (_REPORT.isEdit) cancelEdit(false);
             tg.close();
         } else {
             alert('Ошибка при отправке: ' + JSON.stringify(resp));
             resetSendButton();
         }
     };
-
     const errorCallback = (err) => {
         alert('Ошибка сервера: ' + (err.message || err.toString()));
         resetSendButton();
     };
 
-    if (_REPORT.isEdit) {
-        const payload = {
-            oldRowNumber: _REPORT.oldRowNumber,
-            oldMessageId: _REPORT.oldMessageId,
-            reason: _REPORT.reason,
-            reportData: _REPORT
-        };
-        callApi('submitEdit', payload, successCallback, errorCallback);
-    } else {
-        callApi('submitReport', _REPORT, successCallback, errorCallback);
-    }
+    const action = _REPORT.isEdit ? 'submitEdit' : 'submitReport';
+    const payload = _REPORT.isEdit ? {
+        oldRowNumber: _REPORT.oldRowNumber,
+        oldMessageId: _REPORT.oldMessageId,
+        reason: _REPORT.reason,
+        reportData: _REPORT
+    } : _REPORT;
+    
+    callApi(action, payload, successCallback, errorCallback);
 }
 
 function setupFormEventListeners() {
     document.getElementById('sendBtn').addEventListener('click', sendReport);
-
     document.getElementById('addTrailerBtn').addEventListener('click', () => { showOptionalBlock('trailerBlock', 'addTrailerBtn'); saveDraft(); });
     document.getElementById('addKmBtn').addEventListener('click', () => { showOptionalBlock('kmBlock', 'addKmBtn'); saveDraft(); });
     document.getElementById('addCommentBtn').addEventListener('click', () => { showOptionalBlock('commentBlock', 'addCommentBtn'); saveDraft(); });
-    
     document.getElementById('toggleTrailerTimeBtn').addEventListener('click', () => { 
       showOptionalBlock('trailerTimeInputs', 'toggleTrailerTimeBtn', true);
       if (!document.getElementById('trailerStart').value) document.getElementById('trailerStart').value = document.getElementById('shiftStart').value;

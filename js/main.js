@@ -95,4 +95,3 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Приложение предназначено для работы внутри Telegram.</p></div>';
     }
 });
-

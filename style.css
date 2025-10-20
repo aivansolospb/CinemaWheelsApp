@@ -43,7 +43,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--button-color); }
 input::placeholder, textarea::placeholder { color: var(--hint-color); }
 select {
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23999999" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23${(p=>p.substring(1))(getComputedStyle(document.documentElement).getPropertyValue('--hint-color').trim() || '#999999')}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 1.2em;
@@ -142,3 +142,4 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
   padding: 20px;
   text-align: center;
 }
+

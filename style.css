@@ -162,4 +162,3 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
 .shake {
   animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
-

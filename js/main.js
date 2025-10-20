@@ -50,9 +50,7 @@ function logAndAuth() {
     }
 }
 
-/**
- * ИЗМЕНЕНО: Новая логика загрузки справочников с кэшированием на фронте.
- */
+// --- Загрузка справочников (с кэшированием на фронте) ---
 function loadReferenceLists() {
     const LISTS_CACHE_KEY = 'referenceListsCache';
     const TIMESTAMP_KEY = 'referenceListsTimestamp';
@@ -66,7 +64,6 @@ function loadReferenceLists() {
         const cachedData = localStorage.getItem(LISTS_CACHE_KEY);
         const cacheTimestamp = parseInt(localStorage.getItem(TIMESTAMP_KEY), 10);
         if (cachedData && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION_MS)) {
-            console.log('Загрузка справочников из кэша...');
             populateLists(JSON.parse(cachedData));
             isPopulatedFromCache = true;
         }
@@ -75,10 +72,8 @@ function loadReferenceLists() {
     }
 
     // 2. Всегда запрашивать свежие данные с бэкенда
-    console.log('Запрос свежих справочников с бэкенда...');
     callApi('getReferenceLists', null, 
         (freshLists) => { // Успех
-            console.log('Свежие справочники получены.');
             // Сохраняем свежие данные в кэш
             localStorage.setItem(LISTS_CACHE_KEY, JSON.stringify(freshLists));
             localStorage.setItem(TIMESTAMP_KEY, Date.now().toString());
@@ -102,7 +97,7 @@ function loadReferenceLists() {
 document.addEventListener('DOMContentLoaded', () => {
     initTelegramWebApp();
     logAndAuth();
-    loadReferenceLists(); // Запускаем новую функцию загрузки
+    loadReferenceLists();
 
     // Установка глобальных слушателей
     setupFormEventListeners();

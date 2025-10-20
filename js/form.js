@@ -4,15 +4,11 @@
  */
 
 function handleSubmit() {
-    if (tg.MainButton.isVisible && tg.MainButton.isProgressVisible) {
-        return; // Игнорируем клики во время отправки
-    }
+    // Игнорируем клики во время отправки
+    if (tg.MainButton.isVisible && tg.MainButton.isProgressVisible) return;
+    
     if (_EDIT_MODE_DATA && !hasChanges()) {
-        tg.showPopup({
-            title: 'Нет изменений',
-            message: 'Вы не внесли никаких изменений в отчет.',
-            buttons: [{type: 'ok'}]
-        });
+        tg.showAlert('Вы не внесли никаких изменений в отчет.');
         return;
     }
     preparePreview();
@@ -122,21 +118,16 @@ function preparePreview() {
     };
 
     if (_EDIT_MODE_DATA) {
-        tg.showPopup({
-            title: 'Причина редактирования',
-            message: 'Пожалуйста, укажите причину внесения изменений (до 50 символов).',
-            buttons: [{id: 'save', type: 'default', text: 'Сохранить'}],
-            inputs: [{placeholder: 'Например: исправил опечатку в адресе'}]
-        }, (btn, inputs) => {
-            const reason = inputs[0]?.trim();
-            if (btn === 'save') {
-                if (!reason) {
-                    tg.showAlert('Причина обязательна для редактирования.');
-                    return;
-                }
-                _REPORT.reason = reason.substring(0, 50);
-                showPreviewPopup();
+        // Используем HTML модальное окно для ввода причины
+        showReasonModal((reason) => {
+            if (reason === null) return; // Пользователь нажал отмену
+            if (!reason) {
+                tg.showAlert('Причина обязательна для редактирования.');
+                preparePreview(); // Показываем модалку снова
+                return;
             }
+            _REPORT.reason = reason;
+            showPreviewPopup();
         });
     } else {
         showPreviewPopup();
@@ -177,6 +168,7 @@ function sendReport() {
 }
 
 function setupFormEventListeners() {
+    // Главная кнопка теперь обрабатывается через tg.MainButton.onClick(handleSubmit) в main.js
     const addTrailerBtn = document.getElementById('addTrailerBtn');
     if (addTrailerBtn) addTrailerBtn.addEventListener('click', () => { showOptionalBlock('trailerBlock', 'addTrailerBtn'); saveDraft(); });
     

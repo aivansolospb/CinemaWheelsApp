@@ -105,4 +105,3 @@ function hasChanges() {
         return String(oldValue) !== String(newValue);
     });
 }
-

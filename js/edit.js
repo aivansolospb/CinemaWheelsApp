@@ -58,7 +58,7 @@ function selectReportForEdit(report) {
     document.getElementById('shiftStart').value = report.shiftStart;
     document.getElementById('shiftEnd').value = report.shiftEnd;
 
-    // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ для сброса и заполнения опциональных блоков
+    // Используем новую функцию для сброса и заполнения опциональных блоков
     resetAndFillOptionalBlocks(report);
     
     // Закрываем модальное окно
@@ -88,7 +88,7 @@ function cancelEdit(showAlert = true) {
     _EDIT_MODE_DATA = null;
     document.getElementById('reportForm').reset();
     
-    // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ для сброса опциональных блоков
+    // Используем новую функцию для сброса опциональных блоков
     resetOptionalBlocksVisibility();
     
     loadDraft(); 
@@ -137,6 +137,6 @@ function hasChanges() {
 }
 
 function setupEditEventListeners() {
-    document.getElementById('loadEdtsBtn').addEventListener('click', loadLastTenReports);
+    document.getElementById('loadEditsBtn').addEventListener('click', loadLastTenReports);
 }
 

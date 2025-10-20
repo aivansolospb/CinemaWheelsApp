@@ -30,7 +30,8 @@ function showEditList(data) {
         } catch (e) { /* ignore */ }
         
         return {
-            id: report.rowNumber, // Используем уникальный ID строки как ID кнопки
+            // ИСПРАВЛЕНО: ID кнопки должен быть строкой, а не числом.
+            id: String(report.rowNumber), // Используем уникальный ID строки как ID кнопки
             type: 'default',
             text: `[${displayDate}] ${report.project} (${report.tech})`
         };
@@ -132,3 +133,4 @@ function hasChanges() {
 
     return false;
 }
+

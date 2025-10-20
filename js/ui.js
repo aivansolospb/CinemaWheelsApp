@@ -1,48 +1,8 @@
 /**
  * @file ui.js
- * @description Логика для управления элементами интерфейса: модальные окна, кнопки, показ/скрытие блоков.
+ * @description Логика для управления элементами интерфейса (опциональные блоки).
+ * Вся логика модальных окон была удалена и заменена нативными вызовами Telegram.
  */
-
-function setupModalEventListeners() {
-    const editBtn = document.getElementById('editBtn');
-    if (editBtn) {
-        editBtn.addEventListener('click', () => {
-            document.getElementById('modalPreview').style.display = 'none';
-            resetSendButton();
-        });
-    }
-
-    const cancelEditListBtn = document.getElementById('cancelEditListBtn');
-    if (cancelEditListBtn) {
-        cancelEditListBtn.addEventListener('click', () => {
-            document.getElementById('modalEditList').style.display = 'none';
-        });
-    }
-}
-
-function resetSendButton() {
-    const sendBtn = document.getElementById('sendBtn');
-    const editBtn = document.getElementById('editBtn');
-    if (sendBtn) {
-        sendBtn.disabled = false;
-        sendBtn.innerText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
-    }
-    if (editBtn) {
-        editBtn.disabled = false;
-    }
-}
-
-function resetSaveButton(isLoading) {
-    const saveBtn = document.getElementById('saveNameBtn');
-    const cancelBtn = document.getElementById('cancelNameBtn');
-    if (saveBtn) {
-        saveBtn.disabled = isLoading;
-        saveBtn.innerText = isLoading ? 'Сохранение...' : 'Сохранить';
-    }
-    if (cancelBtn) {
-        cancelBtn.disabled = isLoading;
-    }
-}
 
 function showOptionalBlock(blockId, btnId) {
     const block = document.getElementById(blockId);
@@ -100,4 +60,3 @@ function resetAndFillOptionalBlocks(report) {
         document.getElementById('comment').value = report.comment;
     }
 }
-

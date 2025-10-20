@@ -3,9 +3,11 @@
  * @description Логика для сохранения и загрузки черновика отчета в localStorage.
  */
 const DRAFT_KEY = 'reportDraft';
+let _IS_LOADING_DRAFT = false; // Флаг для предотвращения перезаписи черновика во время загрузки
 
 function saveDraft() {
-    if (_EDIT_MODE_DATA) return;
+    // Не сохраняем черновик в режиме редактирования или во время загрузки другого черновика
+    if (_EDIT_MODE_DATA || _IS_LOADING_DRAFT) return;
 
     const draftData = {
         date: document.getElementById('date').value,
@@ -35,6 +37,8 @@ function loadDraft() {
 
     const savedDraft = localStorage.getItem(DRAFT_KEY);
     if (!savedDraft) return;
+
+    _IS_LOADING_DRAFT = true; // Устанавливаем флаг
 
     try {
         const draftData = JSON.parse(savedDraft);
@@ -70,6 +74,7 @@ function loadDraft() {
     } catch (e) {
         console.error("Ошибка загрузки черновика:", e);
         localStorage.removeItem(DRAFT_KEY);
+    } finally {
+        _IS_LOADING_DRAFT = false; // Снимаем флаг в любом случае
     }
 }
-

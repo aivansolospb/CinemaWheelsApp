@@ -81,3 +81,4 @@ function setupProfileEventListeners() {
         adminPanel.style.display = 'none';
     }
 }
+

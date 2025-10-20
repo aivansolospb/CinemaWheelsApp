@@ -99,6 +99,7 @@ hr { border: 0; border-top: 1px solid var(--separator-color); }
   max-height: 85vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 @keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-zoom-in { from { transform: scale(0.95); } to { transform: scale(1); } }
@@ -108,8 +109,9 @@ hr { border: 0; border-top: 1px solid var(--separator-color); }
   max-height: 45vh; overflow-y: auto; border: 1px solid var(--separator-color);
   font-size: 0.95em;
   line-height: 1.5;
+  width: 100%;
 }
-.modal-actions { display: flex; gap: 10px; align-items: center; width: 100%; }
+.modal-actions { display: flex; gap: 10px; align-items: center; width: 100%; margin-top: auto; }
 .modal-actions .btn-primary {
   background-color: var(--button-color);
   color: var(--button-text-color);
@@ -134,6 +136,7 @@ hr { border: 0; border-top: 1px solid var(--separator-color); }
   border-top: 1px solid var(--separator-color);
   border-bottom: 1px solid var(--separator-color);
   padding: 10px 0;
+  width: 100%;
 }
 .edit-report-item {
   background-color: var(--secondary-bg-color);
@@ -234,15 +237,21 @@ hr { border: 0; border-top: 1px solid var(--separator-color); }
 }
 
 /* Profile Modal Specific Fixes */
-.modal-content .form-group {
-    margin-bottom: 16px;
-    width: 100%;
+.modal-content > div { /* Target #profileMenu and #profileChangeName */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
-#profileChangeName {
-    display: none;
-    flex-direction: column;
-    align-items: flex-start;
+.profile-menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Spacing between buttons */
+  width: 100%;
+  margin: 16px 0;
+}
+#modalProfile .form-group {
+    margin-bottom: 16px;
     width: 100%;
 }
 

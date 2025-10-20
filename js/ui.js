@@ -41,60 +41,70 @@ function resetSaveButton() {
 
 // --- Опциональные блоки ---
 
-function showOptionalBlock(blockId, btnId, isNested = false) {
+function showOptionalBlock(blockId, btnId) {
     document.getElementById(blockId).style.display = 'block';
     if (document.getElementById(btnId)) {
         document.getElementById(btnId).style.display = 'none';
     }
 }
 
+/**
+ * НОВАЯ ФУНКЦИЯ: Скрывает опциональный блок, очищает его поля и показывает кнопку "Добавить".
+ */
+function hideOptionalBlock(blockId, addBtnId) {
+    document.getElementById(blockId).style.display = 'none';
+    document.getElementById(addBtnId).style.display = 'block';
+
+    const block = document.getElementById(blockId);
+    const inputs = block.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        if (input.type === 'number') {
+            input.value = '0';
+        } else if (input.tagName === 'SELECT') {
+            input.selectedIndex = 0;
+        } else {
+            input.value = '';
+        }
+    });
+    
+    if (blockId === 'trailerBlock') {
+         document.getElementById('trailerTimeInputs').style.display = 'none';
+         document.getElementById('toggleTrailerTimeBtn').style.display = 'block';
+         document.getElementById('trailerStart').value = '';
+         document.getElementById('trailerEnd').value = '';
+    }
+
+    saveDraft(); // Пересохраняем черновик после изменения
+}
+
 function resetOptionalBlocksVisibility() {
-    document.getElementById('trailerBlock').style.display = 'none';
-    document.getElementById('addTrailerBtn').style.display = 'block';
-    document.getElementById('trailerTimeInputs').style.display = 'none';
-    document.getElementById('toggleTrailerTimeBtn').style.display = 'block';
-    
-    document.getElementById('kmBlock').style.display = 'none';
-    document.getElementById('addKmBtn').style.display = 'block';
-    
-    document.getElementById('commentBlock').style.display = 'none';
-    document.getElementById('addCommentBtn').style.display = 'block';
+    hideOptionalBlock('trailerBlock', 'addTrailerBtn');
+    hideOptionalBlock('kmBlock', 'addKmBtn');
+    hideOptionalBlock('commentBlock', 'addCommentBtn');
 }
 
 function resetAndFillOptionalBlocks(report) {
     resetOptionalBlocksVisibility(); 
 
-    // Заполнение прицепа
     if (report.trailer && report.trailer !== 'Нет прицепа') {
         showOptionalBlock('trailerBlock', 'addTrailerBtn');
         document.getElementById('trailerSelect').value = report.trailer;
         
         if (report.trailerStart && (report.trailerStart !== report.shiftStart || report.trailerEnd !== report.shiftEnd)) {
-            showOptionalBlock('trailerTimeInputs', 'toggleTrailerTimeBtn', true);
+            showOptionalBlock('trailerTimeInputs', 'toggleTrailerTimeBtn');
             document.getElementById('trailerStart').value = report.trailerStart;
             document.getElementById('trailerEnd').value = report.trailerEnd;
-        } else {
-            document.getElementById('trailerStart').value = '';
-            document.getElementById('trailerEnd').value = '';
         }
-    } else {
-         document.getElementById('trailerSelect').value = '';
     }
     
-    // Заполнение км
     if (report.km > 0) {
         showOptionalBlock('kmBlock', 'addKmBtn');
         document.getElementById('km').value = report.km;
-    } else {
-        document.getElementById('km').value = '0';
     }
     
-    // Заполнение комментария
     if (report.comment) {
         showOptionalBlock('commentBlock', 'addCommentBtn');
         document.getElementById('comment').value = report.comment;
-    } else {
-         document.getElementById('comment').value = '';
     }
 }
 

@@ -13,7 +13,8 @@
   <h2>Отчёт о смене</h2>
   <h3 id="driverNameDisplay"></h3>
 
-  <form id="reportForm">
+  <!-- ИЗМЕНЕНО: onsubmit теперь вызывает новую функцию -->
+  <form id="reportForm" onsubmit="event.preventDefault(); handleSubmit();">
     <label>Дата</label>
     <input type="date" id="date" required>
     <label>Проект</label>
@@ -57,10 +58,15 @@
        <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
     </div>
     <button type="submit" id="submitBtn">Показать превью</button>
+    
+    <!-- НОВЫЙ ЭЛЕМЕНТ: Подсказка, которая будет появляться -->
+    <div id="noChangesHint" style="display: none; text-align: center; color: var(--hint-color); margin-top: 8px; font-size: 0.9em;">
+      Изменений не внесено
+    </div>
+    
     <div id="cancelEditBtnContainer"></div>
   </form>
 
-  <!-- Модальное окно: Превью -->
   <div id="modalPreview" class="modal-overlay">
     <div class="modal-content">
       <h3>Превью отчёта</h3>
@@ -72,7 +78,6 @@
     </div>
   </div>
   
-  <!-- Модальное окно: Профиль -->
   <div id="modalProfile" class="modal-overlay">
     <div class="modal-content">
       <h3>Профиль водителя</h3>
@@ -93,7 +98,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно: Список отчетов для редактирования -->
   <div id="modalEditList" class="modal-overlay">
     <div class="modal-content">
       <h3>Выберите отчёт для редактирования</h3>
@@ -106,7 +110,7 @@
     </div>
   </div>
 
-  <!-- Подключение скриптов -->
+  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/draft.js"></script>
@@ -117,3 +121,4 @@
   <script src="js/main.js"></script>
 </body>
 </html>
+

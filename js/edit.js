@@ -26,23 +26,19 @@ function showEditList(data) {
         return;
     }
 
-    // НОВЫЙ БЛОК: Массив с названиями месяцев для красивого отображения
     const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     
     reports.forEach(report => {
         const btn = document.createElement('button');
         btn.className = 'edit-report-item';
         
-        // ИЗМЕНЕНО: Логика форматирования даты в "ДД.мес"
         let displayDate = '??.??';
         try {
-            const parts = report.date.split('-'); // Разбираем дату YYYY-MM-DD
+            const parts = report.date.split('-');
             const day = parts[2];
-            const monthIndex = parseInt(parts[1], 10) - 1; // Месяцы в JS с 0
+            const monthIndex = parseInt(parts[1], 10) - 1;
             displayDate = `${day}.${monthNames[monthIndex]}`;
-        } catch (e) { 
-            // Оставляем ?? если формат даты неожиданный
-        }
+        } catch (e) { /* Используем ?? по умолчанию */ }
         
         btn.innerText = `[${displayDate}] ${report.project} (${report.tech})`;
         btn.title = `Адрес: ${report.address}\nСмена: ${report.shiftStart}-${report.shiftEnd}`;
@@ -61,48 +57,8 @@ function selectReportForEdit(report) {
     document.getElementById('shiftStart').value = report.shiftStart;
     document.getElementById('shiftEnd').value = report.shiftEnd;
 
-    // Сброс опциональных блоков
-    document.getElementById('trailerBlock').style.display = 'none';
-    document.getElementById('addTrailerBtn').style.display = 'block';
-    document.getElementById('trailerTimeInputs').style.display = 'none';
-    document.getElementById('toggleTrailerTimeBtn').style.display = 'block';
-    document.getElementById('kmBlock').style.display = 'none';
-    document.getElementById('addKmBtn').style.display = 'block';
-    document.getElementById('commentBlock').style.display = 'none';
-    document.getElementById('addCommentBtn').style.display = 'block';
-
-    // Заполнение прицепа
-    if (report.trailer && report.trailer !== 'Нет прицепа') {
-        showOptionalBlock('trailerBlock', 'addTrailerBtn');
-        document.getElementById('trailerSelect').value = report.trailer;
-        
-        if (report.trailerStart && (report.trailerStart !== report.shiftStart || report.trailerEnd !== report.shiftEnd)) {
-            showOptionalBlock('trailerTimeInputs', 'toggleTrailerTimeBtn', true);
-            document.getElementById('trailerStart').value = report.trailerStart;
-            document.getElementById('trailerEnd').value = report.trailerEnd;
-        } else {
-            document.getElementById('trailerStart').value = '';
-            document.getElementById('trailerEnd').value = '';
-        }
-    } else {
-         document.getElementById('trailerSelect').value = '';
-    }
-    
-    // Заполнение км
-    if (report.km > 0) {
-        showOptionalBlock('kmBlock', 'addKmBtn');
-        document.getElementById('km').value = report.km;
-    } else {
-        document.getElementById('km').value = '0';
-    }
-    
-    // Заполнение комментария
-    if (report.comment) {
-        showOptionalBlock('commentBlock', 'addCommentBtn');
-        document.getElementById('comment').value = report.comment;
-    } else {
-         document.getElementById('comment').value = '';
-    }
+    // Сброс и заполнение опциональных блоков
+    resetAndFillOptionalBlocks(report);
     
     document.getElementById('modalEditList').style.display = 'none';
     document.getElementById('submitBtn').innerText = 'Показать превью (Редактирование)';
@@ -128,16 +84,7 @@ function cancelEdit(showAlert = true) {
       
     _EDIT_MODE_DATA = null;
     document.getElementById('reportForm').reset();
-    
-    document.getElementById('trailerBlock').style.display = 'none';
-    document.getElementById('addTrailerBtn').style.display = 'block';
-    document.getElementById('trailerTimeInputs').style.display = 'none';
-    document.getElementById('toggleTrailerTimeBtn').style.display = 'block';
-    document.getElementById('kmBlock').style.display = 'none';
-    document.getElementById('addKmBtn').style.display = 'block';
-    document.getElementById('commentBlock').style.display = 'none';
-    document.getElementById('addCommentBtn').style.display = 'block';
-    
+    resetOptionalBlocksVisibility();
     loadDraft(); 
     
     document.getElementById('submitBtn').innerText = 'Показать превью';
@@ -146,6 +93,46 @@ function cancelEdit(showAlert = true) {
     if (cancelBtn) cancelBtn.remove();
     
     if (showAlert) alert('Редактирование отменено.');
+}
+
+/**
+ * НОВАЯ ФУНКЦИЯ: Сравнивает текущие данные формы с исходными данными (_EDIT_MODE_DATA).
+ * @returns {boolean} - true, если есть изменения, иначе false.
+ */
+function hasChanges() {
+    if (!_EDIT_MODE_DATA) return true; // Если не режим редактирования, считаем, что изменения есть
+
+    const old = _EDIT_MODE_DATA;
+    const form = document.getElementById('reportForm');
+    
+    const currentData = {
+        date: form.date.value,
+        project: form.project.value,
+        tech: form.techSelect.value,
+        address: form.address.value,
+        shiftStart: form.shiftStart.value,
+        shiftEnd: form.shiftEnd.value,
+        trailer: document.getElementById('trailerBlock').style.display === 'block' ? form.trailerSelect.value : 'Нет прицепа',
+        trailerStart: document.getElementById('trailerTimeInputs').style.display === 'block' ? form.trailerStart.value : '',
+        trailerEnd: document.getElementById('trailerTimeInputs').style.display === 'block' ? form.trailerEnd.value : '',
+        km: document.getElementById('kmBlock').style.display === 'block' ? (form.km.value || '0') : '0',
+        comment: document.getElementById('commentBlock').style.display === 'block' ? form.comment.value : ''
+    };
+    
+    // Сравниваем каждое поле
+    if (old.date !== currentData.date) return true;
+    if (old.project !== currentData.project) return true;
+    if (old.tech !== currentData.tech) return true;
+    if (old.address !== currentData.address) return true;
+    if (old.shiftStart !== currentData.shiftStart) return true;
+    if (old.shiftEnd !== currentData.shiftEnd) return true;
+    if ((old.trailer || 'Нет прицепа') !== currentData.trailer) return true;
+    if ((old.trailerStart || '') !== currentData.trailerStart) return true;
+    if ((old.trailerEnd || '') !== currentData.trailerEnd) return true;
+    if (String(old.km || '0') !== currentData.km) return true;
+    if ((old.comment || '') !== currentData.comment) return true;
+
+    return false; // Если ни одно условие не сработало, изменений нет
 }
 
 function setupEditEventListeners() {

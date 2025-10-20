@@ -5,6 +5,7 @@
 
 // --- Глобальные переменные ---
 const tg = window.Telegram.WebApp;
+const APP_VERSION = 'Interactive Validation';
 let _ACCESS_METHOD = 'Неизвестно';
 let _TG_ID = '';
 let _TG_USERNAME = '';
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupFormValidationListeners(); // Инициализация валидации
         
         document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('appVersion').innerText = `v. ${APP_VERSION}`;
         
     } catch (e) {
         console.error('Ошибка инициализации TWA:', e);

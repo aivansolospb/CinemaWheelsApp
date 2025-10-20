@@ -7,6 +7,7 @@
   --hint-color: var(--tg-theme-hint-color, #999999);
   --separator-color: var(--tg-theme-separator-color, #e0e0e0);
   --danger-color: #ff453a; 
+  --invalid-color: #ff3b30;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -18,7 +19,6 @@ body {
   padding-top: calc(16px + env(safe-area-inset-top));
   padding-left: calc(16px + env(safe-area-inset-left));
   padding-right: calc(16px + env(safe-area-inset-right));
-  /* Оставляем место под Главную Кнопку Telegram */
   padding-bottom: calc(80px + env(safe-area-inset-bottom)); 
 }
 h2, h3 { color: var(--text-color); margin-top: 0; }
@@ -38,10 +38,14 @@ input, select, textarea {
   color: var(--text-color);
   box-sizing: border-box; font-size: 1em;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  transition: border-color 0.2s ease, transform 0.1s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-appearance: none;
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--button-color); }
+input:focus, select:focus, textarea:focus { 
+  outline: none; 
+  border-color: var(--button-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--button-color) 25%, transparent);
+}
 input::placeholder, textarea::placeholder { color: var(--hint-color); }
 select {
   background-image: url('data:image/svg+xml;utf8,<svg fill="%23999999" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
@@ -58,24 +62,22 @@ button {
 button:active { opacity: 0.85; }
 button:disabled { opacity: 0.7; cursor: not-allowed; }
 
+.toggle-btn, .toggle-btn-danger, .btn-primary, .btn-secondary {
+    -webkit-tap-highlight-color: transparent;
+}
 .toggle-btn {
   background-color: var(--secondary-bg-color);
   color: var(--button-color);
-  margin-top: 0;
   font-weight: 500;
 }
 .toggle-btn-danger {
-  background-color: var(--secondary-bg-color);
+  background-color: color-mix(in srgb, var(--danger-color) 15%, transparent);
   color: var(--danger-color);
-  margin-top: 10px;
   font-weight: 500;
-  border: 1px solid var(--danger-color);
 }
 .row { display: flex; gap: 10px; }
 .row > * { flex: 1; }
-hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
-
-/* --- Стили для модальных окон --- */
+hr { border: 0; border-top: 1px solid var(--separator-color); }
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(0, 0, 0, 0.4); display: none; align-items: center;
@@ -93,8 +95,14 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
 }
 @keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-zoom-in { from { transform: scale(0.95); } to { transform: scale(1); } }
-
-.modal-actions { display: flex; gap: 10px; margin-top: 16px;}
+.preview {
+  white-space: pre-line; background: var(--secondary-bg-color);
+  padding: 12px; border-radius: 8px; margin-top: 10px; margin-bottom: 20px;
+  max-height: 45vh; overflow-y: auto; border: 1px solid var(--separator-color);
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+.modal-actions { display: flex; gap: 10px; }
 .modal-actions .btn-primary {
   background-color: var(--button-color);
   color: var(--button-text-color);
@@ -103,7 +111,6 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
   background-color: var(--secondary-bg-color);
   color: var(--text-color);
 }
-
 .profile-btn {
   position: fixed; top: 10px; right: 16px;
   top: calc(10px + env(safe-area-inset-top));
@@ -113,7 +120,6 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
   color: var(--text-color); border: 1px solid var(--separator-color);
   z-index: 10; display: flex; align-items: center; justify-content: center;
 }
-
 #editListContainer {
   overflow-y: auto;
   margin-top: 10px;
@@ -121,7 +127,6 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
   border-top: 1px solid var(--separator-color);
   border-bottom: 1px solid var(--separator-color);
   padding: 10px 0;
-  max-height: 60vh;
 }
 .edit-report-item {
   background-color: var(--secondary-bg-color);
@@ -132,33 +137,53 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
   margin-top: 0;
   margin-bottom: 8px;
 }
-.edit-report-item:last-child { margin-bottom: 0; }
+.edit-report-item:last-child {
+  margin-bottom: 0;
+}
 #editListContainer .loading-text {
-  color: var(--hint-color); padding: 20px; text-align: center;
+  color: var(--hint-color);
+  padding: 20px;
+  text-align: center;
 }
-
 .optional-block-header {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 }
-.optional-block-header label { margin-top: 0; margin-bottom: 0; }
+.optional-block-header label {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 .remove-btn {
-  background: none; border: none; color: var(--hint-color);
-  font-size: 0.9em; font-weight: 500; cursor: pointer;
-  padding: 4px; margin: 0; width: auto;
+  background: none;
+  border: none;
+  color: var(--hint-color);
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  width: auto;
 }
-
-/* --- Стили для валидации --- */
 .invalid-field {
-  border-color: var(--danger-color) !important;
+  border-color: var(--invalid-color) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--invalid-color) 25%, transparent) !important;
 }
-
 @keyframes shake {
   10%, 90% { transform: translate3d(-1px, 0, 0); }
   20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
 }
-
 .shake {
   animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
+.app-version {
+  text-align: center;
+  font-size: 0.8em;
+  color: var(--hint-color);
+  margin-top: 20px;
+  margin-bottom: -10px;
+}
+

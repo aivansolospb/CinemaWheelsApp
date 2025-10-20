@@ -1,49 +1,53 @@
 /**
  * @file edit.js
- * @description Логика для режима редактирования прошлых отчетов.
+ * @description Логика для режима редактирования с использованием нативных элементов Telegram.
  */
 
 function loadLastTenReports() {
-    document.getElementById('modalProfile').style.display = 'none';
-    
-    const modal = document.getElementById('modalEditList');
-    const listEl = document.getElementById('editListContainer');
-    listEl.innerHTML = '<div class="loading-text">Загрузка...</div>';
-    modal.style.display = 'flex';
-    
     callApi('getLastTenReports', { tgId: _TG_ID }, showEditList, (err) => {
-        listEl.innerHTML = `<div class="loading-text" style="color: var(--danger-color)">Ошибка загрузки: ${err.message || err.toString()}</div>`;
+        tg.showAlert('Ошибка загрузки отчетов: ' + (err.message || err.toString()));
     });
 }
 
 function showEditList(data) {
     const reports = data.reports;
-    const listEl = document.getElementById('editListContainer');
-    listEl.innerHTML = '';
     
     if (!reports || reports.length === 0) {
-        listEl.innerHTML = '<div class="loading-text">Нет доступных отчетов для редактирования.</div>';
+        tg.showAlert('Нет доступных отчетов для редактирования.');
         return;
     }
 
     const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     
-    reports.forEach(report => {
-        const btn = document.createElement('button');
-        btn.className = 'edit-report-item';
-        
+    const popupButtons = reports.map(report => {
         let displayDate = '??.??';
         try {
             const parts = report.date.split('-');
             const day = parts[2];
             const monthIndex = parseInt(parts[1], 10) - 1;
-            displayDate = `${day}.${monthNames[monthIndex]}`;
-        } catch (e) { /* Используем ?? по умолчанию */ }
+            displayDate = `${day} ${monthNames[monthIndex]}`;
+        } catch (e) { /* ignore */ }
         
-        btn.innerText = `[${displayDate}] ${report.project} (${report.tech})`;
-        btn.title = `Адрес: ${report.address}\nСмена: ${report.shiftStart}-${report.shiftEnd}`;
-        btn.onclick = () => selectReportForEdit(report);
-        listEl.appendChild(btn);
+        return {
+            id: report.rowNumber, // Используем уникальный ID строки как ID кнопки
+            type: 'default',
+            text: `[${displayDate}] ${report.project} (${report.tech})`
+        };
+    });
+
+    popupButtons.push({ type: 'cancel' });
+
+    tg.showPopup({
+        title: 'Выберите отчёт',
+        message: 'Какой из последних 10 отчетов вы хотите отредактировать?',
+        buttons: popupButtons
+    }, (buttonId) => {
+        if (buttonId) { // Если не 'cancel'
+            const selectedReport = reports.find(r => String(r.rowNumber) === String(buttonId));
+            if (selectedReport) {
+                selectReportForEdit(selectedReport);
+            }
+        }
     });
 }
 
@@ -59,8 +63,7 @@ function selectReportForEdit(report) {
 
     resetAndFillOptionalBlocks(report);
     
-    document.getElementById('modalEditList').style.display = 'none';
-    document.getElementById('submitBtn').innerText = 'Показать превью (Редактирование)';
+    tg.MainButton.setText('Показать превью (Редакт.)');
     
     const cancelContainer = document.getElementById('cancelEditBtnContainer');
     if (!document.getElementById('cancelEditBtn')) {
@@ -77,9 +80,7 @@ function selectReportForEdit(report) {
 }
 
 function cancelEdit(showAlert = true) {
-    if (!_EDIT_MODE_DATA) {
-        if (!showAlert) return;
-    }
+    if (!_EDIT_MODE_DATA) return;
       
     _EDIT_MODE_DATA = null;
     document.getElementById('reportForm').reset();
@@ -88,12 +89,12 @@ function cancelEdit(showAlert = true) {
     
     loadDraft(); 
     
-    document.getElementById('submitBtn').innerText = 'Показать превью';
+    tg.MainButton.setText('Показать превью');
     
     const cancelBtn = document.getElementById('cancelEditBtn');
     if (cancelBtn) cancelBtn.remove();
     
-    if (showAlert) alert('Редактирование отменено.');
+    if (showAlert) tg.showAlert('Редактирование отменено.');
 }
 
 function hasChanges() {
@@ -130,11 +131,3 @@ function hasChanges() {
 
     return false;
 }
-
-function setupEditEventListeners() {
-    const loadEditsBtn = document.getElementById('loadEditsBtn');
-    if (loadEditsBtn) {
-        loadEditsBtn.addEventListener('click', loadLastTenReports);
-    }
-}
-

@@ -4,13 +4,10 @@
  */
 
 function handleNewUserRegistration() {
-    document.getElementById('profileMenu').style.display = 'none';
-    const changeNameView = document.getElementById('profileChangeName');
-    changeNameView.style.display = 'flex';
+    showProfileView('profileChangeName');
     document.getElementById('profileNameInput').value = '';
     
-    const cancelBtn = document.getElementById('cancelNameBtn');
-    cancelBtn.onclick = () => {
+    document.getElementById('cancelNameBtn').onclick = () => {
         tg.close();
     };
 
@@ -18,10 +15,7 @@ function handleNewUserRegistration() {
         const nameInput = document.getElementById('profileNameInput');
         const driverName = nameInput.value.trim();
         if (!driverName) {
-            const wrapper = nameInput.closest('.form-group');
-            wrapper.classList.add('shake');
-            nameInput.classList.add('invalid-field');
-            setTimeout(() => wrapper.classList.remove('shake'), 500);
+            triggerInvalidInputAnimation(nameInput);
             return;
         }
 
@@ -40,7 +34,7 @@ function handleNewUserRegistration() {
                 loadProjectHistory();
                 loadDraft();
                 resetSaveButton(false);
-                switchToProfileMenu();
+                hideProfileModal();
             },
             (err) => {
                 tg.showAlert('Ошибка регистрации: ' + (err.message || err.toString()));
@@ -59,13 +53,10 @@ function handleSaveName() {
     const newName = nameInput.value.trim();
 
     if (!newName) {
-        const wrapper = nameInput.closest('.form-group');
-        wrapper.classList.add('shake');
-        nameInput.classList.add('invalid-field');
-        setTimeout(() => wrapper.classList.remove('shake'), 500);
+        triggerInvalidInputAnimation(nameInput);
         return;
     }
-    if (newName === oldName) return switchToProfileMenu();
+    if (newName === oldName) return hideProfileModal();
 
     resetSaveButton(true);
     const payload = { oldName, newName, tgId: _TG_ID, tgUsername: _TG_USERNAME };
@@ -75,7 +66,7 @@ function handleSaveName() {
             if (resp && resp.status === 'ok') {
                 localStorage.setItem('driverName', newName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${newName}`;
-                switchToProfileMenu();
+                hideProfileModal();
             } else if (resp && resp.error === 'name_taken') {
                 tg.showAlert(resp.message || 'Это ФИО уже занято.');
             } else {
@@ -90,27 +81,32 @@ function handleSaveName() {
     );
 }
 
-function switchToChangeName() {
-    document.getElementById('profileMenu').style.display = 'none';
-    const changeNameView = document.getElementById('profileChangeName');
-    changeNameView.style.display = 'flex';
-    document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
-    document.getElementById('saveNameBtn').onclick = handleSaveName;
-    document.getElementById('cancelNameBtn').onclick = switchToProfileMenu;
+function triggerInvalidInputAnimation(inputElement) {
+    try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
+    const wrapper = inputElement.closest('.form-group');
+    if (wrapper) {
+        wrapper.classList.add('shake');
+        setTimeout(() => wrapper.classList.remove('shake'), 500);
+    }
+    inputElement.classList.add('invalid-field');
 }
 
-function switchToProfileMenu() {
-    document.getElementById('profileMenu').style.display = 'flex';
+
+function showProfileView(viewId) {
+    document.getElementById('profileMenu').style.display = 'none';
     document.getElementById('profileChangeName').style.display = 'none';
+    document.getElementById(viewId).style.display = 'flex';
+}
+
+function hideProfileModal() {
     document.getElementById('modalProfile').style.display = 'none';
     document.getElementById('profileNameInput').classList.remove('invalid-field');
 }
 
 function setupProfileEventListeners() {
     document.getElementById('profileBtn').addEventListener('click', () => {
+        showProfileView('profileMenu');
         document.getElementById('modalProfile').style.display = 'flex';
-        document.getElementById('profileMenu').style.display = 'flex';
-        document.getElementById('profileChangeName').style.display = 'none';
     });
     
     document.getElementById('profileNameInput').addEventListener('input', (e) => {
@@ -119,11 +115,28 @@ function setupProfileEventListeners() {
         }
     });
 
-    document.getElementById('closeProfileBtn').addEventListener('click', switchToProfileMenu);
-    document.getElementById('changeNameMenuBtn').addEventListener('click', switchToChangeName);
+    document.getElementById('closeProfileBtn').addEventListener('click', hideProfileModal);
+    
+    document.getElementById('changeNameMenuBtn').addEventListener('click', () => {
+        showProfileView('profileChangeName');
+        document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
+    });
+    
+    document.getElementById('cancelNameBtn').addEventListener('click', () => {
+        // During registration, this button has a different behavior set dynamically
+        // Default behavior is to go back to the main menu
+        if (localStorage.getItem('driverName')) {
+             showProfileView('profileMenu');
+        } else {
+            // This case should ideally not be hit if registration flow is followed
+            hideProfileModal();
+        }
+    });
+
+    document.getElementById('saveNameBtn').addEventListener('click', handleSaveName);
 
     document.getElementById('loadEditsBtn').addEventListener('click', () => {
-        document.getElementById('modalProfile').style.display = 'none';
+        hideProfileModal();
         loadLastTenReports();
     });
 }

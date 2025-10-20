@@ -1,65 +1,107 @@
 /**
  * @file ui.js
- * @description Управление элементами интерфейса: модальные окна, кнопки, показ/скрытие блоков.
+ * @description Логика для управления элементами интерфейса: модальные окна, кнопки, показ/скрытие блоков.
  */
 
-/**
- * Показывает опциональный блок и скрывает кнопку, которая его вызвала.
- * @param {string} blockId - ID блока для показа.
- * @param {string} btnId - ID кнопки для скрытия.
- * @param {boolean} [isNested=false] - Является ли блок вложенным (для особой логики скрытия).
- */
+// --- Модальные окна ---
+function setupModalEventListeners() {
+    document.getElementById('editBtn').addEventListener('click', () => {
+        document.getElementById('modalPreview').style.display = 'none';
+        resetSendButton();
+    });
+    document.getElementById('cancelEditListBtn').addEventListener('click', () => {
+        document.getElementById('modalEditList').style.display = 'none';
+    });
+}
+
+// --- Кнопки ---
+function resetSendButton() {
+    const sendBtn = document.getElementById('sendBtn');
+    const editBtn = document.getElementById('editBtn');
+    if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.innerText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
+    }
+    if (editBtn) {
+        editBtn.disabled = false;
+    }
+}
+
+function resetSaveButton() {
+    const saveBtn = document.getElementById('saveNameBtn');
+    const cancelBtn = document.getElementById('cancelNameBtn');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Сохранить';
+    }
+    if (cancelBtn) {
+        cancelBtn.disabled = false;
+    }
+}
+
+// --- Опциональные блоки ---
+
 function showOptionalBlock(blockId, btnId, isNested = false) {
     document.getElementById(blockId).style.display = 'block';
-    document.getElementById(btnId).style.display = 'none';
-    if (isNested) {
+    if (document.getElementById(btnId)) {
         document.getElementById(btnId).style.display = 'none';
     }
 }
 
 /**
- * Сбрасывает состояние кнопки отправки.
+ * НОВАЯ ФУНКЦИЯ: Скрывает все опциональные блоки и показывает их кнопки "Добавить".
  */
-function resetSendButton() {
-    document.getElementById('sendBtn').disabled = false;
-    document.getElementById('editBtn').disabled = false;
-    document.getElementById('sendBtn').innerText = _EDIT_MODE_DATA ? 'Отправить (Редакт.)' : 'Отправить отчет';
-}
-
-/**
- * Сбрасывает состояние кнопки сохранения в профиле.
- */
-function resetSaveButton() {
-    const saveBtn = document.getElementById('saveNameBtn');
-    const cancelBtn = document.getElementById('cancelNameBtn');
-    saveBtn.disabled = false; 
-    cancelBtn.disabled = false;
-    saveBtn.innerText = 'Сохранить';
-}
-
-/**
- * Устанавливает слушатели событий для элементов UI.
- */
-function setupUIEventListeners() {
-    // Модальное окно превью
-    document.getElementById('editBtn').addEventListener('click', () => {
-        document.getElementById('modalPreview').style.display = 'none';
-        resetSendButton();
-    });
+function resetOptionalBlocksVisibility() {
+    document.getElementById('trailerBlock').style.display = 'none';
+    document.getElementById('addTrailerBtn').style.display = 'block';
+    document.getElementById('trailerTimeInputs').style.display = 'none';
+    document.getElementById('toggleTrailerTimeBtn').style.display = 'block';
     
-    // Модальное окно профиля
-    document.getElementById('profileBtn').addEventListener('click', () => {
-        document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
-        document.getElementById('modalProfile').style.display = 'flex';
-    });
-
-    document.getElementById('cancelNameBtn').addEventListener('click', () => {
-        document.getElementById('modalProfile').style.display = 'none';
-        resetSaveButton();
-    });
-
-    // Модальное окно списка для редактирования
-    document.getElementById('cancelEditListBtn').addEventListener('click', () => {
-        document.getElementById('modalEditList').style.display = 'none';
-    });
+    document.getElementById('kmBlock').style.display = 'none';
+    document.getElementById('addKmBtn').style.display = 'block';
+    
+    document.getElementById('commentBlock').style.display = 'none';
+    document.getElementById('addCommentBtn').style.display = 'block';
 }
+
+/**
+ * НОВАЯ ФУНКЦИЯ: Сбрасывает и затем заполняет опциональные блоки данными из отчета.
+ * @param {object} report - Объект отчета для заполнения формы.
+ */
+function resetAndFillOptionalBlocks(report) {
+    resetOptionalBlocksVisibility(); // Сначала все скрываем
+
+    // Заполнение прицепа
+    if (report.trailer && report.trailer !== 'Нет прицепа') {
+        showOptionalBlock('trailerBlock', 'addTrailerBtn');
+        document.getElementById('trailerSelect').value = report.trailer;
+        
+        if (report.trailerStart && (report.trailerStart !== report.shiftStart || report.trailerEnd !== report.shiftEnd)) {
+            showOptionalBlock('trailerTimeInputs', 'toggleTrailerTimeBtn', true);
+            document.getElementById('trailerStart').value = report.trailerStart;
+            document.getElementById('trailerEnd').value = report.trailerEnd;
+        } else {
+            document.getElementById('trailerStart').value = '';
+            document.getElementById('trailerEnd').value = '';
+        }
+    } else {
+         document.getElementById('trailerSelect').value = '';
+    }
+    
+    // Заполнение км
+    if (report.km > 0) {
+        showOptionalBlock('kmBlock', 'addKmBtn');
+        document.getElementById('km').value = report.km;
+    } else {
+        document.getElementById('km').value = '0';
+    }
+    
+    // Заполнение комментария
+    if (report.comment) {
+        showOptionalBlock('commentBlock', 'addCommentBtn');
+        document.getElementById('comment').value = report.comment;
+    } else {
+         document.getElementById('comment').value = '';
+    }
+}
+

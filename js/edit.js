@@ -132,12 +132,9 @@ function hasChanges() {
 }
 
 function setupEditEventListeners() {
-    // ИСПРАВЛЕНА ОПЕЧАТКА: loadEdtsBtn -> loadEditsBtn
     const loadEditsBtn = document.getElementById('loadEditsBtn');
     if (loadEditsBtn) {
         loadEditsBtn.addEventListener('click', loadLastTenReports);
-    } else {
-        console.error('Кнопка с ID "loadEditsBtn" не найдена.');
     }
 }
 

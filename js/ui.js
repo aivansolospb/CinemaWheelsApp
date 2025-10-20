@@ -48,9 +48,6 @@ function showOptionalBlock(blockId, btnId, isNested = false) {
     }
 }
 
-/**
- * НОВАЯ ФУНКЦИЯ: Скрывает все опциональные блоки и показывает их кнопки "Добавить".
- */
 function resetOptionalBlocksVisibility() {
     document.getElementById('trailerBlock').style.display = 'none';
     document.getElementById('addTrailerBtn').style.display = 'block';
@@ -64,12 +61,8 @@ function resetOptionalBlocksVisibility() {
     document.getElementById('addCommentBtn').style.display = 'block';
 }
 
-/**
- * НОВАЯ ФУНКЦИЯ: Сбрасывает и затем заполняет опциональные блоки данными из отчета.
- * @param {object} report - Объект отчета для заполнения формы.
- */
 function resetAndFillOptionalBlocks(report) {
-    resetOptionalBlocksVisibility(); // Сначала все скрываем
+    resetOptionalBlocksVisibility(); 
 
     // Заполнение прицепа
     if (report.trailer && report.trailer !== 'Нет прицепа') {

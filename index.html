@@ -31,7 +31,10 @@
     <button type="button" id="addTrailerBtn" class="toggle-btn">+ Добавить прицеп</button>
     <div id="trailerBlock" style="display:none;">
       <hr>
-      <label>Прицеп</label>
+      <div class="optional-block-header">
+        <label>Прицеп</label>
+        <button type="button" class="remove-btn" onclick="hideOptionalBlock('trailerBlock', 'addTrailerBtn')">Убрать</button>
+      </div>
       <select id="trailerSelect"></select>
       <button type="button" id="toggleTrailerTimeBtn" class="toggle-btn" style="margin-top: 10px;">
         Время прицепа отличается от времени смены
@@ -43,24 +46,24 @@
           <input type="time" id="trailerEnd">
         </div>
       </div>
-      <!-- НОВАЯ КНОПКА -->
-      <button type="button" class="remove-btn" onclick="hideOptionalBlock('trailerBlock', 'addTrailerBtn')">Убрать прицеп</button>
     </div>
     <button type="button" id="addKmBtn" class="toggle-btn">+ Добавить перепробег</button>
     <div id="kmBlock" style="display:none;">
        <hr>
-       <label>Перепробег (км)</label>
+       <div class="optional-block-header">
+         <label>Перепробег (км)</label>
+         <button type="button" class="remove-btn" onclick="hideOptionalBlock('kmBlock', 'addKmBtn')">Убрать</button>
+       </div>
        <input type="number" id="km" min="0" step="1" value="0">
-       <!-- НОВАЯ КНОПКА -->
-       <button type="button" class="remove-btn" onclick="hideOptionalBlock('kmBlock', 'addKmBtn')">Убрать перепробег</button>
     </div>
     <button type="button" id="addCommentBtn" class="toggle-btn">+ Добавить комментарий</button>
     <div id="commentBlock" style="display:none;">
        <hr>
-       <label>Комментарий</label>
+       <div class="optional-block-header">
+         <label>Комментарий</label>
+         <button type="button" class="remove-btn" onclick="hideOptionalBlock('commentBlock', 'addCommentBtn')">Убрать</button>
+       </div>
        <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
-       <!-- НОВАЯ КНОПКА -->
-       <button type="button" class="remove-btn" onclick="hideOptionalBlock('commentBlock', 'addCommentBtn')">Убрать комментарий</button>
     </div>
     <button type="submit" id="submitBtn">Показать превью</button>
     
@@ -114,7 +117,7 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- ИЗМЕНЕНО: Добавлены все скрипты в правильном порядке -->
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/draft.js"></script>

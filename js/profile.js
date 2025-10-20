@@ -1,11 +1,8 @@
 /**
  * @file profile.js
- * @description Логика модального окна профиля, включая смену имени.
+ * @description Логика модального окна профиля: смена имени, запуск режима редактирования.
  */
 
-/**
- * Обрабатывает сохранение нового имени водителя.
- */
 function handleSaveName() {
     const oldName = localStorage.getItem('driverName') || '';
     const newName = document.getElementById('profileNameInput').value.trim();
@@ -27,8 +24,7 @@ function handleSaveName() {
     const payload = {
         oldName: oldName,
         newName: newName,
-        accessMethod: _ACCESS_METHOD,
-        tgId: _TG_ID,
+        tgId: _TG_ID, 
         tgUsername: _TG_USERNAME
     };
 
@@ -52,14 +48,19 @@ function handleSaveName() {
         }
         resetSaveButton();
     };
-
+    
     callApi('updateDriverName', payload, successCallback, errorCallback);
 }
 
-
-/**
- * Устанавливает слушатели событий для модального окна профиля.
- */
 function setupProfileEventListeners() {
+    document.getElementById('profileBtn').addEventListener('click', () => {
+        document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
+        document.getElementById('modalProfile').style.display = 'flex';
+    });
+    document.getElementById('cancelNameBtn').addEventListener('click', () => {
+        document.getElementById('modalProfile').style.display = 'none';
+        resetSaveButton();
+    });
     document.getElementById('saveNameBtn').addEventListener('click', handleSaveName);
 }
+

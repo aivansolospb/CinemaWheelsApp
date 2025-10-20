@@ -13,12 +13,11 @@ let _REPORT = {};
 
 // --- Логирование и аутентификация ---
 function logAndAuth() {
-    // Используем более надежный способ получения данных пользователя
     const user = tg.initDataUnsafe?.user || tg.initData?.user || null;
     
     if (!user) {
         document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Не удалось получить данные пользователя. Пожалуйста, откройте приложение через Telegram.</p></div>';
-        tg.close();
+        try { tg.close(); } catch(e) {}
         return;
     }
 
@@ -44,11 +43,36 @@ function logAndAuth() {
     }
 }
 
-// --- Загрузка справочников ---
+// --- Загрузка справочников с кэшированием ---
 function loadReferenceLists() {
-    callApi('getReferenceLists', null, populateLists, (err) => {
-        tg.showAlert('Не удалось загрузить справочники: ' + (err.message || err.toString()));
-    });
+    // 1. Попробовать загрузить из кэша и сразу отобразить
+    const cachedLists = localStorage.getItem('referenceLists');
+    if (cachedLists) {
+        try {
+            console.log("Загрузка списков из кэша...");
+            populateLists(JSON.parse(cachedLists));
+        } catch(e) {
+            console.error("Ошибка парсинга кэшированных списков", e);
+        }
+    }
+
+    // 2. Отправить запрос на сервер за свежими данными
+    callApi('getReferenceLists', null, 
+        (freshLists) => { // Успех
+            console.log("Списки успешно загружены с сервера.");
+            populateLists(freshLists);
+            // Сохраняем свежие данные в кэш
+            localStorage.setItem('referenceLists', JSON.stringify(freshLists));
+        }, 
+        (err) => { // Ошибка
+            console.error('Не удалось загрузить справочники с сервера:', err.message || err.toString());
+            // Если в кэше ничего не было, показываем ошибку
+            if (!cachedLists) {
+                 tg.showAlert('Сетевая ошибка или API недоступен. Не удалось загрузить справочники.');
+            }
+            // Если данные из кэша уже отображены, пользователь может продолжать работу.
+        }
+    );
 }
 
 // --- Основной запуск приложения ---
@@ -62,24 +86,23 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.style.colorScheme = tg.colorScheme;
         });
 
-        // Настройка главной кнопки
         tg.MainButton.setText('Показать превью');
         tg.MainButton.onClick(handleSubmit);
         tg.MainButton.show();
 
-        // Основная логика запускается после инициализации Telegram
         logAndAuth();
-        loadReferenceLists();
+        loadReferenceLists(); // Загружает списки (сначала кэш, потом сервер)
 
         setupFormEventListeners();
         setupModalEventListeners();
         setupProfileEventListeners();
         
         document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-        loadDraft();
+        // Загрузка черновика теперь происходит внутри populateLists, чтобы избежать гонки состояний
 
     } catch (e) {
         console.error('Ошибка инициализации Telegram WebApp:', e);
         document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Это приложение предназначено для работы внутри Telegram.</p></div>';
     }
 });
+

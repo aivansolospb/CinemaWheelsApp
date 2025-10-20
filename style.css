@@ -43,7 +43,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--button-color); }
 input::placeholder, textarea::placeholder { color: var(--hint-color); }
 select {
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23${(p=>p.substring(1))(getComputedStyle(document.documentElement).getPropertyValue('--hint-color').trim() || '#999999')}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23999999" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 1.2em;
@@ -61,29 +61,18 @@ button[type="submit"] {
   color: var(--button-text-color);
   margin-top: 24px;
 }
-button.toggle-btn {
+.toggle-btn {
   background-color: var(--secondary-bg-color);
   color: var(--button-color);
   margin-top: 15px;
   font-weight: 500;
 }
-button.toggle-btn-danger {
+.toggle-btn-danger {
   background-color: var(--secondary-bg-color);
   color: var(--danger-color);
   margin-top: 10px;
   font-weight: 500;
   border: 1px solid var(--danger-color);
-}
-/* НОВЫЙ СТИЛЬ */
-button.remove-btn {
-  background-color: transparent;
-  color: var(--danger-color);
-  margin-top: 10px;
-  font-weight: 500;
-  font-size: 0.9em;
-  padding: 8px 12px;
-  border: 1px solid var(--separator-color);
-  width: auto; /* Чтобы кнопка не была на всю ширину */
 }
 .row { display: flex; gap: 10px; }
 .row > * { flex: 1; }
@@ -152,5 +141,26 @@ hr { border: 0; border-top: 1px solid var(--separator-color); margin: 24px 0; }
   color: var(--hint-color);
   padding: 20px;
   text-align: center;
+}
+.optional-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.optional-block-header label {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--hint-color);
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  width: auto;
 }
 

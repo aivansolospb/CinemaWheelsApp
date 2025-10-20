@@ -5,7 +5,7 @@
 
 // --- Глобальные переменные ---
 const tg = window.Telegram.WebApp;
-const APP_VERSION = 'with Tooltips';
+const APP_VERSION = 'Silent Validation';
 let _ACCESS_METHOD = 'Неизвестно';
 let _TG_ID = '';
 let _TG_USERNAME = '';

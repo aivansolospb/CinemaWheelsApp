@@ -11,14 +11,18 @@ function handleNewUserRegistration() {
     
     const cancelBtn = document.getElementById('cancelNameBtn');
     cancelBtn.onclick = () => {
-        tg.showAlert('Регистрация обязательна для использования приложения.');
         tg.close();
     };
 
     document.getElementById('saveNameBtn').onclick = () => {
-        const driverName = document.getElementById('profileNameInput').value.trim();
+        const nameInput = document.getElementById('profileNameInput');
+        const driverName = nameInput.value.trim();
         if (!driverName) {
-            return tg.showAlert('Имя не может быть пустым.');
+            const wrapper = nameInput.closest('.form-group');
+            wrapper.classList.add('shake');
+            nameInput.classList.add('invalid-field');
+            setTimeout(() => wrapper.classList.remove('shake'), 500);
+            return;
         }
 
         const userInfo = { driverName, tgId: _TG_ID, username: _TG_USERNAME, accessMethod: _ACCESS_METHOD };
@@ -35,9 +39,8 @@ function handleNewUserRegistration() {
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
                 loadProjectHistory();
                 loadDraft();
-                document.getElementById('modalProfile').style.display = 'none';
                 resetSaveButton(false);
-                switchToProfileMenu(); // Возвращаем обычное поведение кнопкам
+                switchToProfileMenu();
             },
             (err) => {
                 tg.showAlert('Ошибка регистрации: ' + (err.message || err.toString()));
@@ -52,8 +55,16 @@ function handleNewUserRegistration() {
 
 function handleSaveName() {
     const oldName = localStorage.getItem('driverName') || '';
-    const newName = document.getElementById('profileNameInput').value.trim();
-    if (!newName) return tg.showAlert('Имя не может быть пустым!');
+    const nameInput = document.getElementById('profileNameInput');
+    const newName = nameInput.value.trim();
+
+    if (!newName) {
+        const wrapper = nameInput.closest('.form-group');
+        wrapper.classList.add('shake');
+        nameInput.classList.add('invalid-field');
+        setTimeout(() => wrapper.classList.remove('shake'), 500);
+        return;
+    }
     if (newName === oldName) return switchToProfileMenu();
 
     resetSaveButton(true);
@@ -64,7 +75,6 @@ function handleSaveName() {
             if (resp && resp.status === 'ok') {
                 localStorage.setItem('driverName', newName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${newName}`;
-                tg.showAlert(`Имя успешно обновлено!`);
                 switchToProfileMenu();
             } else if (resp && resp.error === 'name_taken') {
                 tg.showAlert(resp.message || 'Это ФИО уже занято.');
@@ -93,6 +103,7 @@ function switchToProfileMenu() {
     document.getElementById('profileMenu').style.display = 'flex';
     document.getElementById('profileChangeName').style.display = 'none';
     document.getElementById('modalProfile').style.display = 'none';
+    document.getElementById('profileNameInput').classList.remove('invalid-field');
 }
 
 function setupProfileEventListeners() {
@@ -100,6 +111,12 @@ function setupProfileEventListeners() {
         document.getElementById('modalProfile').style.display = 'flex';
         document.getElementById('profileMenu').style.display = 'flex';
         document.getElementById('profileChangeName').style.display = 'none';
+    });
+    
+    document.getElementById('profileNameInput').addEventListener('input', (e) => {
+        if(e.target.classList.contains('invalid-field')) {
+            e.target.classList.remove('invalid-field');
+        }
     });
 
     document.getElementById('closeProfileBtn').addEventListener('click', switchToProfileMenu);

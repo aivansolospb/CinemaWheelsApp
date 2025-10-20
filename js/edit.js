@@ -19,7 +19,6 @@ function showEditList(data) {
 
     const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     
-    // Используем нативный popup для выбора отчета, так как это удобно
     const popupButtons = reports.map(report => {
         let displayDate = '??.??';
         try {
@@ -30,8 +29,8 @@ function showEditList(data) {
         } catch (e) { /* ignore */ }
         
         return {
-            // ИСПРАВЛЕНО: ID кнопки должен быть строкой, а не числом.
-            id: String(report.rowNumber), // Используем уникальный ID строки как ID кнопки
+            // ИСПРАВЛЕНО: ID кнопки должен быть строкой.
+            id: String(report.rowNumber),
             type: 'default',
             text: `[${displayDate}] ${report.project} (${report.tech})`
         };

@@ -55,7 +55,7 @@ function selectReportForEdit(report) {
     resetAndFillOptionalBlocks(report);
     
     document.getElementById('modalEditList').style.display = 'none';
-    tg.MainButton.setText('Показать превью (Редакт.)');
+    tg.MainButton.setText('Предпросмотр (Редакт.)');
     updateFormValidationState(); // Обновляем состояние кнопки
     
     const cancelContainer = document.getElementById('cancelEditBtnContainer');
@@ -79,7 +79,7 @@ function cancelEdit(showAlert = true) {
     resetOptionalBlocksVisibility();
     document.getElementById('date').valueAsDate = new Date();
     loadDraft(); // Пытаемся загрузить черновик
-    tg.MainButton.setText('Показать превью');
+    tg.MainButton.setText('Предпросмотр');
     const cancelBtn = document.getElementById('cancelEditBtn');
     if (cancelBtn) cancelBtn.remove();
     updateFormValidationState(); // Обновляем состояние кнопки
@@ -105,3 +105,4 @@ function hasChanges() {
         return String(oldValue) !== String(newValue);
     });
 }
+

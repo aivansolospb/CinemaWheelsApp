@@ -1,6 +1,6 @@
 /**
  * @file form.js
- * @description Логика формы, валидация, превью.
+ * @description Логика формы, валидация, предпросмотр.
  */
 
 const REQUIRED_FIELDS = ['date', 'project', 'techSelect', 'address', 'shiftStart', 'shiftEnd'];
@@ -24,11 +24,15 @@ function updateFormValidationState() {
     });
 
     if (isAllValid) {
-        tg.MainButton.enable();
-        tg.MainButton.setParams({ color: tg.themeParams.button_color });
+        tg.MainButton.setParams({ 
+            color: tg.themeParams.button_color,
+            text_color: tg.themeParams.button_text_color,
+        });
     } else {
-        tg.MainButton.disable();
-        tg.MainButton.setParams({ color: tg.themeParams.secondary_bg_color });
+        tg.MainButton.setParams({ 
+            color: tg.themeParams.secondary_bg_color,
+            text_color: tg.themeParams.hint_color,
+        });
     }
 }
 
@@ -44,6 +48,8 @@ function triggerInvalidFormAnimation() {
             setTimeout(() => el.classList.remove('shake'), 500);
         }
     });
+    
+    tg.showAlert('Пожалуйста, заполните все обязательные поля. Они подсвечены красным.');
 }
 
 function setupFormValidationListeners() {

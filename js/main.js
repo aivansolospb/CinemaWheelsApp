@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.colorScheme = tg.colorScheme;
         tg.onEvent('themeChanged', () => { document.documentElement.style.colorScheme = tg.colorScheme; });
 
-        tg.MainButton.setText('Показать превью');
+        tg.MainButton.setText('Предпросмотр');
         tg.MainButton.onClick(() => {
             if (isFormValid()) {
                 handleSubmit();
@@ -95,3 +95,4 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Приложение предназначено для работы внутри Telegram.</p></div>';
     }
 });
+

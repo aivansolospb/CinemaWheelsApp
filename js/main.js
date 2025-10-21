@@ -5,7 +5,7 @@
 
 // --- Глобальные переменные ---
 const tg = window.Telegram.WebApp;
-const APP_VERSION = '2.1-stable (Reliable Sync)';
+const APP_VERSION = '2.2 (Speed & Stability)';
 let _TG_ID = '';
 let _TG_USERNAME = '';
 let _EDIT_MODE_DATA = null;
@@ -25,11 +25,17 @@ function handshake() {
     _TG_USERNAME = user.username || '';
     const telegramFullName = (user.first_name + ' ' + (user.last_name || '')).trim();
 
-    // Запрашиваем имя и кэш отчетов одним махом
+    // Сначала показываем имя из кэша, если оно есть
+    const localName = localStorage.getItem('driverName');
+    if (localName) {
+        document.getElementById('driverNameDisplay').innerText = `Водитель: ${localName}`;
+    }
+
+    // Запрашиваем актуальные данные с сервера
     callApi('handshake', { tgId: _TG_ID, username: _TG_USERNAME }, 
     (resp) => {
         if (resp.driverName) {
-            // Пользователь существует
+            // Пользователь существует, обновляем локальные данные
             localStorage.setItem('driverName', resp.driverName);
             localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(resp.reports || []));
             document.getElementById('driverNameDisplay').innerText = `Водитель: ${resp.driverName}`;

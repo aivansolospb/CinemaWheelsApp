@@ -259,3 +259,41 @@ hr { border: 0; border-top: 1px solid var(--separator-color); }
     width: 100%;
     margin-bottom: 16px;
 }
+
+/* Sending Overlay */
+.sending-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--bg-color);
+  display: none; /* Hidden by default */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.sending-content {
+  text-align: center;
+  color: var(--text-color);
+}
+.sending-content h3 {
+  margin: 16px 0 8px 0;
+}
+.sending-content p {
+  color: var(--hint-color);
+  margin: 0;
+}
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid var(--secondary-bg-color);
+  border-bottom-color: var(--button-color);
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+@keyframes rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+

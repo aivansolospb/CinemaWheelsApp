@@ -8,87 +8,98 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+  <div id="appContainer">
     <button type="button" id="profileBtn" class="profile-btn">👤</button>
 
-  <h2>Отчёт о смене</h2>
-  <h3 id="driverNameDisplay">Загрузка...</h3>
+    <h2>Отчёт о смене</h2>
+    <h3 id="driverNameDisplay">Загрузка...</h3>
 
-  <form id="reportForm" onsubmit="event.preventDefault();">
-    <div class="form-group">
-      <label for="date">Дата</label>
-      <input type="date" id="date" class="required-field">
-      <div class="tooltip">Обязательное поле</div>
-    </div>
-    <div class="form-group">
-      <label for="project">Проект</label>
-      <input id="project" placeholder="Название проекта" list="project-list" maxlength="50" class="required-field">
-      <datalist id="project-list"></datalist>
-      <div class="tooltip">Обязательное поле</div>
-    </div>
-    <div class="form-group">
-      <label for="techSelect">Техника</label>
-      <select id="techSelect" class="required-field"></select>
-      <div class="tooltip">Обязательное поле</div>
-    </div>
-    <div class="form-group">
-      <label for="address">Место / Адрес</label>
-      <input id="address" placeholder="Где вы работали" maxlength="100" class="required-field">
-      <div class="tooltip">Обязательное поле</div>
-    </div>
-    <div class="form-group">
-      <label>Смена (Начало / Конец)</label>
-      <div class="row">
-        <input type="time" id="shiftStart" class="required-field">
-        <input type="time" id="shiftEnd" class="required-field">
+    <form id="reportForm" onsubmit="event.preventDefault();">
+      <div class="form-group">
+        <label for="date">Дата</label>
+        <input type="date" id="date" class="required-field">
+        <div class="tooltip">Обязательное поле</div>
       </div>
-      <div class="tooltip">Обязательное поле</div>
-    </div>
-    
-    <hr style="margin: 18px 0;">
-    
-    <button type="button" id="addTrailerBtn" class="toggle-btn">+ Добавить прицеп</button>
-    <div id="trailerBlock" style="display:none;">
-      <div class="optional-block-header">
-        <label>Прицеп</label>
-        <button type="button" class="remove-btn" onclick="hideOptionalBlock('trailerBlock', 'addTrailerBtn')">Убрать</button>
+      <div class="form-group">
+        <label for="project">Проект</label>
+        <input id="project" placeholder="Название проекта" list="project-list" maxlength="50" class="required-field">
+        <datalist id="project-list"></datalist>
+        <div class="tooltip">Обязательное поле</div>
       </div>
-      <select id="trailerSelect"></select>
-      <button type="button" id="toggleTrailerTimeBtn" class="toggle-btn" style="margin-top: 10px;">
-        Время прицепа отличается от времени смены
-      </button>
-      <div id="trailerTimeInputs" style="display:none; margin-top: 10px;">
-        <label>Прицеп (Начало / Конец)</label>
+      <div class="form-group">
+        <label for="techSelect">Техника</label>
+        <select id="techSelect" class="required-field"></select>
+        <div class="tooltip">Обязательное поле</div>
+      </div>
+      <div class="form-group">
+        <label for="address">Место / Адрес</label>
+        <input id="address" placeholder="Где вы работали" maxlength="100" class="required-field">
+        <div class="tooltip">Обязательное поле</div>
+      </div>
+      <div class="form-group">
+        <label>Смена (Начало / Конец)</label>
         <div class="row">
-          <input type="time" id="trailerStart">
-          <input type="time" id="trailerEnd">
+          <input type="time" id="shiftStart" class="required-field">
+          <input type="time" id="shiftEnd" class="required-field">
         </div>
+        <div class="tooltip">Обязательное поле</div>
       </div>
+      
       <hr style="margin: 18px 0;">
+      
+      <button type="button" id="addTrailerBtn" class="toggle-btn">+ Добавить прицеп</button>
+      <div id="trailerBlock" style="display:none;">
+        <div class="optional-block-header">
+          <label>Прицеп</label>
+          <button type="button" class="remove-btn" onclick="hideOptionalBlock('trailerBlock', 'addTrailerBtn')">Убрать</button>
+        </div>
+        <select id="trailerSelect"></select>
+        <button type="button" id="toggleTrailerTimeBtn" class="toggle-btn" style="margin-top: 10px;">
+          Время прицепа отличается от времени смены
+        </button>
+        <div id="trailerTimeInputs" style="display:none; margin-top: 10px;">
+          <label>Прицеп (Начало / Конец)</label>
+          <div class="row">
+            <input type="time" id="trailerStart">
+            <input type="time" id="trailerEnd">
+          </div>
+        </div>
+        <hr style="margin: 18px 0;">
+      </div>
+      <button type="button" id="addKmBtn" class="toggle-btn">+ Добавить перепробег</button>
+      <div id="kmBlock" style="display:none;">
+        <div class="optional-block-header">
+          <label>Перепробег (км)</label>
+          <button type="button" class="remove-btn" onclick="hideOptionalBlock('kmBlock', 'addKmBtn')">Убрать</button>
+        </div>
+        <input type="number" id="km" min="0" step="1" value="0">
+        <hr style="margin: 18px 0;">
+      </div>
+      <button type="button" id="addCommentBtn" class="toggle-btn">+ Добавить комментарий</button>
+      <div id="commentBlock" style="display:none;">
+        <div class="optional-block-header">
+          <label>Комментарий</label>
+          <button type="button" class="remove-btn" onclick="hideOptionalBlock('commentBlock', 'addCommentBtn')">Убрать</button>
+        </div>
+        <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
+        <hr style="margin: 18px 0;">
+      </div>
+      
+      <div id="cancelEditBtnContainer"></div>
+    </form>
+  </div>
+
+  <!-- SENDING OVERLAY -->
+  <div id="sendingOverlay" class="sending-overlay">
+    <div class="sending-content">
+      <div class="spinner"></div>
+      <h3>Ваш отчет отправляется...</h3>
+      <p>Пожалуйста, не закрывайте окно.</p>
     </div>
-    <button type="button" id="addKmBtn" class="toggle-btn">+ Добавить перепробег</button>
-    <div id="kmBlock" style="display:none;">
-       <div class="optional-block-header">
-         <label>Перепробег (км)</label>
-         <button type="button" class="remove-btn" onclick="hideOptionalBlock('kmBlock', 'addKmBtn')">Убрать</button>
-       </div>
-       <input type="number" id="km" min="0" step="1" value="0">
-       <hr style="margin: 18px 0;">
-    </div>
-    <button type="button" id="addCommentBtn" class="toggle-btn">+ Добавить комментарий</button>
-    <div id="commentBlock" style="display:none;">
-       <div class="optional-block-header">
-         <label>Комментарий</label>
-         <button type="button" class="remove-btn" onclick="hideOptionalBlock('commentBlock', 'addCommentBtn')">Убрать</button>
-       </div>
-       <textarea id="comment" placeholder="Любые детали, проблемы, заметки..." rows="3" maxlength="350"></textarea>
-       <hr style="margin: 18px 0;">
-    </div>
-    
-    <div id="cancelEditBtnContainer"></div>
-  </form>
+  </div>
+
 
   <!-- MODAL WINDOWS -->
-
   <div id="modalPreview" class="modal-overlay">
     <div class="modal-content">
       <h3>Предпросмотр отчёта</h3>
@@ -107,6 +118,7 @@
             <div class="profile-menu-buttons">
               <button type="button" id="changeNameMenuBtn" class="toggle-btn">Изменить ФИО</button>
               <button type="button" id="loadEditsBtn" class="toggle-btn">Редактировать смену</button>
+              <button type="button" id="clearCacheBtn" class="toggle-btn-danger" style="margin-top: 16px;">Очистить кэш</button>
             </div>
             <p id="appVersion" class="app-version"></p>
             <div class="modal-actions">
@@ -176,3 +188,4 @@
 
 </body>
 </html>
+

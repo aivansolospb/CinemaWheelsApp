@@ -35,7 +35,7 @@ function handleNewUserRegistration(defaultName = '') {
                 localStorage.setItem('driverName', driverName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
                 hideProfileModal();
-                initializeApp(); // Запускаем основную логику после успешной регистрации
+                initializeApp(); 
             },
             (err) => {
                 tg.showAlert('Ошибка регистрации: ' + (err.message || err.toString()));
@@ -68,6 +68,12 @@ function handleSaveName() {
     const saveBtn = document.getElementById('saveNameBtn');
     saveBtn.disabled = true;
     saveBtn.innerText = 'Сохранение...';
+    
+    const onFinish = () => {
+        _isSyncingName = false;
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Сохранить';
+    };
 
     callApi('syncDriverNameByTgId', { newName, tgId: _TG_ID, tgUsername: _TG_USERNAME, oldName },
         (resp) => {
@@ -78,19 +84,29 @@ function handleSaveName() {
             } else {
                  tg.showAlert(resp.message || 'Неизвестная ошибка при смене имени.');
             }
+            onFinish();
         },
         (err) => {
             tg.showAlert('Ошибка сервера: ' + (err.message || 'Попробуйте позже.'));
+            onFinish();
         }
-    ).finally(() => { // finally - это не метод callApi, но он сработает, если callApi вернет промис. В данном случае это для чистоты кода
-        _isSyncingName = false;
-        saveBtn.disabled = false;
-        saveBtn.innerText = 'Сохранить';
-    });
+    );
+}
+
+function handleClearCache() {
+    showConfirmModal(
+        'Очистка кэша',
+        'Это действие удалит все локальные данные (черновик, историю) и перезагрузит приложение. Вы уверены?',
+        (isConfirmed) => {
+            if (isConfirmed) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+    );
 }
 
 function triggerInvalidInputAnimation(inputElement) {
-    // ... (эта функция остается без изменений)
     try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
     const wrapper = inputElement.closest('.form-group');
     if (wrapper) {
@@ -146,5 +162,7 @@ function setupProfileEventListeners() {
         hideProfileModal();
         displayReportsFromCache();
     });
+
+    document.getElementById('clearCacheBtn').addEventListener('click', handleClearCache);
 }
 

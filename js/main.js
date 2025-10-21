@@ -5,7 +5,7 @@
 
 // --- Глобальные переменные ---
 const tg = window.Telegram.WebApp;
-const APP_VERSION = '2.3 (Registry & Sync Fix)';
+const APP_VERSION = '2.4 (Cache-First Loading)';
 let _TG_ID = '';
 let _TG_USERNAME = '';
 let _EDIT_MODE_DATA = null;
@@ -68,26 +68,39 @@ function initializeApp() {
 }
 
 function loadReferenceLists(callback) {
+    let hasCalledCallback = false;
     const cachedLists = localStorage.getItem('referenceLists');
+
+    // Шаг 1: Мгновенно загрузить из кэша и разблокировать приложение
     if (cachedLists) {
         try { 
             populateLists(JSON.parse(cachedLists)); 
-        } catch(e) {}
+            if (callback) {
+                callback();
+                hasCalledCallback = true;
+            }
+        } catch(e) {
+            console.error("Failed to parse cached lists", e);
+        }
     }
 
+    // Шаг 2: В фоне запросить свежие данные
     callApi('getReferenceLists', null, 
         (freshLists) => {
+            // Обновить UI и localStorage свежими данными
             populateLists(freshLists);
             localStorage.setItem('referenceLists', JSON.stringify(freshLists));
-            if (callback) callback();
+            // Если кэша не было, разблокировать приложение сейчас
+            if (!hasCalledCallback && callback) {
+                callback();
+            }
         }, 
         (err) => {
-            console.error('Ошибка загрузки справочников:', err.message);
-            if (!cachedLists) {
-                tg.showAlert('Не удалось загрузить справочники. Функционал может быть ограничен.');
+            console.error('Ошибка фоновой загрузки справочников:', err.message);
+            // Если кэша не было и произошла ошибка, все равно разблокировать
+            if (!hasCalledCallback && callback) {
+                callback();
             }
-            // Вызываем колбэк даже при ошибке, чтобы приложение запустилось
-            if (callback) callback();
         }
     );
 }
@@ -111,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tg.MainButton.show();
 
-        handshake(); // Новый единый метод инициализации
+        handshake();
 
         setupFormEventListeners();
         setupModalEventListeners();

@@ -5,14 +5,15 @@
 
 // --- Глобальные переменные ---
 const tg = window.Telegram.WebApp;
-const APP_VERSION = '2.0-beta (Fast & Sync)';
+const APP_VERSION = '2.1-stable (Reliable Sync)';
 let _TG_ID = '';
 let _TG_USERNAME = '';
 let _EDIT_MODE_DATA = null;
 let _REPORT = {};
+let _isInitialized = false;
 
 // --- Аутентификация и инициализация ---
-function logAndAuth() {
+function handshake() {
     const user = tg.initDataUnsafe?.user || null;
     if (!user) {
         document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Не удалось получить данные. Пожалуйста, откройте приложение через Telegram.</p></div>';
@@ -24,40 +25,34 @@ function logAndAuth() {
     _TG_USERNAME = user.username || '';
     const telegramFullName = (user.first_name + ' ' + (user.last_name || '')).trim();
 
-    callApi('logAppOpen', { tgId: _TG_ID, username: _TG_USERNAME });
-
-    const localName = localStorage.getItem('driverName');
-
-    if (localName) {
-        // Обычный вход: имя есть в кэше
-        document.getElementById('driverNameDisplay').innerText = `Водитель: ${localName}`;
-        initializeApp();
-    } else {
-        // "Холодный старт": кэш пуст, идем на сервер
-        callApi('getDriverName', { tgId: _TG_ID }, (resp) => {
-            if (resp && resp.driverName) {
-                // Случай "Втихаря": пользователь есть, но зашел с нового устройства
-                localStorage.setItem('driverName', resp.driverName);
-                document.getElementById('driverNameDisplay').innerText = `Водитель: ${resp.driverName}`;
-                initializeApp();
-            } else {
-                // Новый пользователь: на сервере его нет
-                handleNewUserRegistration(telegramFullName);
-            }
-        }, (err) => {
-             tg.showAlert('Критическая ошибка при проверке пользователя. Попробуйте позже.');
-             console.error(err);
-        });
-    }
+    // Запрашиваем имя и кэш отчетов одним махом
+    callApi('handshake', { tgId: _TG_ID, username: _TG_USERNAME }, 
+    (resp) => {
+        if (resp.driverName) {
+            // Пользователь существует
+            localStorage.setItem('driverName', resp.driverName);
+            localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(resp.reports || []));
+            document.getElementById('driverNameDisplay').innerText = `Водитель: ${resp.driverName}`;
+            initializeApp();
+        } else {
+            // Новый пользователь
+            handleNewUserRegistration(telegramFullName);
+        }
+    }, 
+    (err) => {
+         tg.showAlert('Критическая ошибка при инициализации: ' + (err.message || 'Сервер не отвечает.'));
+         console.error(err);
+    });
 }
 
 // --- Загрузка данных и настройка UI ---
 function initializeApp() {
+    if (_isInitialized) return;
     loadReferenceLists(); 
     loadProjectHistory();
     loadDraft();
-    syncLocalCache(); // Фоновая синхронизация отчетов
     updateFormValidationState();
+    _isInitialized = true;
 }
 
 function loadReferenceLists() {
@@ -96,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tg.MainButton.show();
 
-        logAndAuth();
+        handshake(); // Новый единый метод инициализации
 
         setupFormEventListeners();
         setupModalEventListeners();
@@ -111,3 +106,4 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-family: sans-serif;"><h1>Ошибка</h1><p>Приложение предназначено для работы внутри Telegram.</p></div>';
     }
 });
+

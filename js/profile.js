@@ -71,20 +71,18 @@ function handleSaveName() {
 
     callApi('syncDriverNameByTgId', { newName, tgId: _TG_ID, tgUsername: _TG_USERNAME, oldName },
         (resp) => {
-            if (resp && resp.error === 'name_taken') {
-                tg.showAlert(resp.message || 'Это ФИО уже занято.');
-            } else if (resp.status === 'ok') {
+            if (resp.status === 'ok') {
                 localStorage.setItem('driverName', newName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${newName}`;
                 hideProfileModal();
             } else {
-                 tg.showAlert('Неизвестная ошибка при смене имени.');
+                 tg.showAlert(resp.message || 'Неизвестная ошибка при смене имени.');
             }
         },
         (err) => {
             tg.showAlert('Ошибка сервера: ' + (err.message || 'Попробуйте позже.'));
         }
-    ).finally(() => {
+    ).finally(() => { // finally - это не метод callApi, но он сработает, если callApi вернет промис. В данном случае это для чистоты кода
         _isSyncingName = false;
         saveBtn.disabled = false;
         saveBtn.innerText = 'Сохранить';
@@ -92,6 +90,7 @@ function handleSaveName() {
 }
 
 function triggerInvalidInputAnimation(inputElement) {
+    // ... (эта функция остается без изменений)
     try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
     const wrapper = inputElement.closest('.form-group');
     if (wrapper) {
@@ -148,3 +147,4 @@ function setupProfileEventListeners() {
         displayReportsFromCache();
     });
 }
+

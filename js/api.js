@@ -11,11 +11,10 @@ function callApi(action, payload, callback, errorCallback) {
   
   window[callbackName] = function(data) {
     try {
-      if (data && data.status === 'error') {
-        if (errorCallback) errorCallback(data); 
-        else console.error('Ошибка API:', data.message || data.error);
-      } else {
-        if (callback) callback(data);
+      if (data && data.status === 'error' && errorCallback) {
+        errorCallback(data); 
+      } else if (callback) {
+        callback(data);
       }
     } catch (e) {
       console.error("Ошибка в колбэке JSONP:", e);

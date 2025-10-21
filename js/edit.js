@@ -1,29 +1,67 @@
 /**
  * @file edit.js
- * @description Логика для режима редактирования с HTML модальным окном.
+ * @description Логика для режима редактирования, включая кэширование отчетов.
  */
 
-function loadLastTenReports() {
-    const modal = document.getElementById('modalEditList');
-    const listEl = document.getElementById('editListContainer');
-    listEl.innerHTML = '<div class="loading-text">Загрузка...</div>';
-    modal.style.display = 'flex';
-    
-    callApi('getLastTenReports', { tgId: _TG_ID }, showEditList, (err) => {
-        listEl.innerHTML = `<div class="loading-text" style="color: var(--danger-color)">Ошибка загрузки: ${err.message || err.toString()}</div>`;
+const REPORTS_CACHE_KEY = 'lastTenReports';
+
+// --- Кэширование отчетов ---
+
+function syncLocalCache() {
+    callApi('getCachedReports', { tgId: _TG_ID }, (serverData) => {
+        if (serverData && serverData.reports) {
+            localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(serverData.reports));
+        }
+    }, (err) => {
+        console.error('Ошибка фоновой синхронизации кэша:', err);
     });
 }
 
-function showEditList(data) {
-    const reports = data.reports;
+function updateLocalCache(newReportData, isEdit) {
+    try {
+        let reports = JSON.parse(localStorage.getItem(REPORTS_CACHE_KEY) || '[]');
+        if (isEdit) {
+            const index = reports.findIndex(r => r.rowNumber === newReportData.oldRowNumber);
+            if (index !== -1) {
+                reports[index] = newReportData;
+            } else { // Если не нашли, просто добавляем в начало
+                 reports.unshift(newReportData);
+            }
+        } else {
+            reports.unshift(newReportData);
+        }
+        const updatedReports = reports.slice(0, 10);
+        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(updatedReports));
+    } catch (e) {
+        console.error('Ошибка обновления локального кэша отчетов:', e);
+    }
+}
+
+// --- UI для редактирования ---
+
+function displayReportsFromCache() {
+    const modal = document.getElementById('modalEditList');
+    const listEl = document.getElementById('editListContainer');
+    
+    try {
+        const reports = JSON.parse(localStorage.getItem(REPORTS_CACHE_KEY) || '[]');
+        listEl.innerHTML = '';
+
+        if (reports.length === 0) {
+            listEl.innerHTML = '<div class="loading-text">Нет доступных отчетов для редактирования.</div>';
+        } else {
+             showEditList(reports);
+        }
+    } catch(e) {
+        listEl.innerHTML = `<div class="loading-text" style="color: var(--danger-color)">Ошибка чтения кэша.</div>`;
+    }
+    modal.style.display = 'flex';
+}
+
+function showEditList(reports) {
     const listEl = document.getElementById('editListContainer');
     listEl.innerHTML = '';
     
-    if (!reports || reports.length === 0) {
-        listEl.innerHTML = '<div class="loading-text">Нет доступных отчетов для редактирования.</div>';
-        return;
-    }
-
     const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     
     reports.forEach(report => {
@@ -56,7 +94,7 @@ function selectReportForEdit(report) {
     
     document.getElementById('modalEditList').style.display = 'none';
     tg.MainButton.setText('Предпросмотр (Редакт.)');
-    updateFormValidationState(); // Обновляем состояние кнопки
+    updateFormValidationState();
     
     const cancelContainer = document.getElementById('cancelEditBtnContainer');
     if (!document.getElementById('cancelEditBtn')) {
@@ -78,11 +116,11 @@ function cancelEdit(showAlert = true) {
     document.getElementById('reportForm').reset();
     resetOptionalBlocksVisibility();
     document.getElementById('date').valueAsDate = new Date();
-    loadDraft(); // Пытаемся загрузить черновик
+    loadDraft();
     tg.MainButton.setText('Предпросмотр');
     const cancelBtn = document.getElementById('cancelEditBtn');
     if (cancelBtn) cancelBtn.remove();
-    updateFormValidationState(); // Обновляем состояние кнопки
+    updateFormValidationState();
     if (showAlert) tg.showAlert('Редактирование отменено.');
 }
 
@@ -105,4 +143,3 @@ function hasChanges() {
         return String(oldValue) !== String(newValue);
     });
 }
-

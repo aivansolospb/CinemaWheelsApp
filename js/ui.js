@@ -60,38 +60,6 @@ function showReasonModal(callback) {
     document.getElementById('modalReason').style.display = 'flex';
 }
 
-function showProfileModal({ isRegistration }) {
-    const modal = document.getElementById('modalProfile');
-    if (isRegistration) {
-        showProfileChangeNameUI();
-        document.querySelector('#profileChangeName h3').innerText = 'Регистрация';
-        document.getElementById('cancelNameBtn').innerText = 'Закрыть';
-    } else {
-        showProfileMenuUI();
-    }
-    modal.style.display = 'flex';
-}
-
-function hideProfileModal() {
-    document.getElementById('modalProfile').style.display = 'none';
-    const saveBtn = document.getElementById('saveNameBtn');
-    saveBtn.disabled = false;
-    saveBtn.innerText = 'Сохранить';
-}
-
-function showProfileMenuUI() {
-    document.getElementById('profileMenu').style.display = 'block';
-    document.getElementById('profileChangeName').style.display = 'none';
-}
-
-function showProfileChangeNameUI() {
-    document.getElementById('profileMenu').style.display = 'none';
-    document.getElementById('profileChangeName').style.display = 'block';
-    document.querySelector('#profileChangeName h3').innerText = 'Изменение ФИО';
-    document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
-    document.getElementById('cancelNameBtn').innerText = 'Отмена';
-}
-
 function showOptionalBlock(blockId, btnId) {
     document.getElementById(blockId).style.display = 'block';
     document.getElementById(btnId).style.display = 'none';
@@ -139,4 +107,3 @@ function resetAndFillOptionalBlocks(report) {
         document.getElementById('comment').value = report.comment;
     }
 }
-

@@ -1,6 +1,6 @@
 /**
  * @file form.js
- * @description Логика формы, валидация, предпросмотр.
+ * @description Логика формы, валидация, предпросмотр и "оптимистичная" отправка.
  */
 
 const REQUIRED_FIELDS = ['date', 'project', 'techSelect', 'address', 'shiftStart', 'shiftEnd'];
@@ -168,33 +168,32 @@ function preparePreview() {
 }
 
 function sendReport() {
-    const sendBtn = document.getElementById('sendBtn');
-    const editBtn = document.getElementById('editBtn');
-    sendBtn.disabled = true;
-    sendBtn.innerText = 'Отправка...';
-    editBtn.disabled = true;
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('editBtn').disabled = true;
+    document.getElementById('sendBtn').innerText = 'Отправка...';
 
     const action = _REPORT.isEdit ? 'submitEdit' : 'submitReport';
-    const payload = _REPORT.isEdit ? { oldRowNumber: _REPORT.oldRowNumber, oldMessageId: _REPORT.oldMessageId, reason: _REPORT.reason, reportData: _REPORT } : _REPORT;
+    const payload = _REPORT;
 
-    callApi(action, payload, 
-        (resp) => {
-            if (resp && resp.status === 'ok') {
-                saveProjectHistory(_REPORT.project);
-                localStorage.removeItem('reportDraft');
-                if (_REPORT.isEdit) cancelEdit(false);
-                tg.close();
-            } else {
-                tg.showAlert('Ошибка: ' + JSON.stringify(resp));
-                resetSendButton();
-            }
-        },
-        (err) => {
-            tg.showAlert('Ошибка сервера: ' + (err.message || err.toString()));
-            resetSendButton();
-        }
+    // --- ОПТИМИСТИЧНЫЙ UI ---
+    // 1. Обновляем все локальные кэши немедленно
+    saveProjectHistory(payload.project);
+    updateLocalCache(payload, payload.isEdit);
+    localStorage.removeItem('reportDraft');
+    if (payload.isEdit) {
+        cancelEdit(false);
+    }
+    
+    // 2. Закрываем приложение, не дожидаясь ответа сервера
+    tg.close();
+    
+    // 3. Отправляем запрос в фоновом режиме ("Огонь-и-забыть")
+    callApi(action, payload,
+        (resp) => { /* Приложение уже закрыто, ничего не делаем */ },
+        (err) => { /* Ошибка придет пользователю в ЛС от бота */ }
     );
 }
+
 
 function setupFormEventListeners() {
     document.getElementById('addTrailerBtn').addEventListener('click', () => { showOptionalBlock('trailerBlock', 'addTrailerBtn'); saveDraft(); });
@@ -207,4 +206,3 @@ function setupFormEventListeners() {
         saveDraft(); 
     });
 }
-

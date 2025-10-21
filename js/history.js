@@ -36,4 +36,3 @@ function saveProjectHistory(project) {
         console.error('Failed to save project history', e);
     }
 }
-

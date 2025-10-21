@@ -1,15 +1,16 @@
 /**
  * @file profile.js
- * @description Логика модального окна профиля, включая регистрацию и сброс.
+ * @description Логика модального окна профиля, регистрация и смена ФИО по TG ID.
  */
 
-function handleNewUserRegistration() {
+let _isSyncingName = false;
+
+function handleNewUserRegistration(defaultName = '') {
     showProfileView('profileChangeName');
-    document.getElementById('profileNameInput').value = '';
+    document.getElementById('profileNameInput').value = defaultName;
+    document.querySelector('#profileChangeName h3').innerText = 'Регистрация';
     
-    document.getElementById('cancelNameBtn').onclick = () => {
-        tg.close();
-    };
+    document.getElementById('cancelNameBtn').onclick = () => tg.close();
 
     document.getElementById('saveNameBtn').onclick = () => {
         const nameInput = document.getElementById('profileNameInput');
@@ -19,26 +20,27 @@ function handleNewUserRegistration() {
             return;
         }
 
-        const userInfo = { driverName, tgId: _TG_ID, username: _TG_USERNAME, accessMethod: _ACCESS_METHOD };
-        resetSaveButton(true);
+        const saveBtn = document.getElementById('saveNameBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Проверка...';
 
-        callApi('notifyOfNewUser', userInfo,
+        callApi('notifyOfNewUser', { driverName, tgId: _TG_ID, username: _TG_USERNAME },
             (resp) => {
                 if (resp && resp.error === 'name_taken') {
                     tg.showAlert(resp.message || 'Это ФИО уже занято.');
-                    resetSaveButton(false);
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = 'Сохранить';
                     return;
                 }
                 localStorage.setItem('driverName', driverName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${driverName}`;
-                loadProjectHistory();
-                loadDraft();
-                resetSaveButton(false);
                 hideProfileModal();
+                initializeApp(); // Запускаем основную логику после успешной регистрации
             },
             (err) => {
                 tg.showAlert('Ошибка регистрации: ' + (err.message || err.toString()));
-                resetSaveButton(false);
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Сохранить';
             }
         );
     };
@@ -46,39 +48,47 @@ function handleNewUserRegistration() {
     document.getElementById('modalProfile').style.display = 'flex';
 }
 
-
 function handleSaveName() {
-    const oldName = localStorage.getItem('driverName') || '';
+    if (_isSyncingName) return;
+
     const nameInput = document.getElementById('profileNameInput');
     const newName = nameInput.value.trim();
+    const oldName = localStorage.getItem('driverName') || '';
 
     if (!newName) {
         triggerInvalidInputAnimation(nameInput);
         return;
     }
-    if (newName === oldName) return hideProfileModal();
+    if (newName === oldName) {
+        hideProfileModal();
+        return;
+    }
 
-    resetSaveButton(true);
-    const payload = { oldName, newName, tgId: _TG_ID, tgUsername: _TG_USERNAME };
+    _isSyncingName = true;
+    const saveBtn = document.getElementById('saveNameBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Сохранение...';
 
-    callApi('updateDriverName', payload, 
+    callApi('syncDriverNameByTgId', { newName, tgId: _TG_ID, tgUsername: _TG_USERNAME, oldName },
         (resp) => {
-            if (resp && resp.status === 'ok') {
+            if (resp && resp.error === 'name_taken') {
+                tg.showAlert(resp.message || 'Это ФИО уже занято.');
+            } else if (resp.status === 'ok') {
                 localStorage.setItem('driverName', newName);
                 document.getElementById('driverNameDisplay').innerText = `Водитель: ${newName}`;
                 hideProfileModal();
-            } else if (resp && resp.error === 'name_taken') {
-                tg.showAlert(resp.message || 'Это ФИО уже занято.');
             } else {
-                tg.showAlert('Ошибка: ' + (resp.message || 'Неизвестная ошибка'));
+                 tg.showAlert('Неизвестная ошибка при смене имени.');
             }
-            resetSaveButton(false);
         },
         (err) => {
-            tg.showAlert('Ошибка сервера: ' + (err.message || err.toString()));
-            resetSaveButton(false);
+            tg.showAlert('Ошибка сервера: ' + (err.message || 'Попробуйте позже.'));
         }
-    );
+    ).finally(() => {
+        _isSyncingName = false;
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Сохранить';
+    });
 }
 
 function triggerInvalidInputAnimation(inputElement) {
@@ -119,17 +129,15 @@ function setupProfileEventListeners() {
     
     document.getElementById('changeNameMenuBtn').addEventListener('click', () => {
         showProfileView('profileChangeName');
+        document.querySelector('#profileChangeName h3').innerText = 'Изменение ФИО';
         document.getElementById('profileNameInput').value = localStorage.getItem('driverName') || '';
     });
     
     document.getElementById('cancelNameBtn').addEventListener('click', () => {
-        // During registration, this button has a different behavior set dynamically
-        // Default behavior is to go back to the main menu
         if (localStorage.getItem('driverName')) {
              showProfileView('profileMenu');
         } else {
-            // This case should ideally not be hit if registration flow is followed
-            hideProfileModal();
+            tg.close();
         }
     });
 
@@ -137,7 +145,6 @@ function setupProfileEventListeners() {
 
     document.getElementById('loadEditsBtn').addEventListener('click', () => {
         hideProfileModal();
-        loadLastTenReports();
+        displayReportsFromCache();
     });
 }
-

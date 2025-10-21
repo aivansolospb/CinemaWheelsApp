@@ -78,4 +78,3 @@ function loadDraft() {
         _IS_LOADING_DRAFT = false; // Снимаем флаг в любом случае
     }
 }
- 

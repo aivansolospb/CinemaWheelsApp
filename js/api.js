@@ -2,7 +2,7 @@
  * @file api.js
  * @description Логика для отправки запросов к Google Apps Script (JSONP).
  */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzQB13KwQTcixThKikyas74sHNAwysIiANLa46ZbpZPV05nD7Wsd7fwqMHAikH5ySQ3Jg/exec'; 
+const API_URL = 'https://script.google.com/macros/s/AKfycbwIfJzkv5S3Dz0P6pi_Id1U0UOEVVBMAVjTMqI1pOm0iMxgj7-tRWrLQpqePp8nxmmpeA/exec'; 
 
 function callApi(action, payload, callback, errorCallback) {
   const callbackName = 'jsonpCallback_' + new Date().getTime() + '_' + Math.floor(Math.random() * 100000);

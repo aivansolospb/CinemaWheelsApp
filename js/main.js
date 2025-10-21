@@ -5,7 +5,7 @@
 
 // --- Глобальные переменные ---
 const tg = window.Telegram.WebApp;
-const APP_VERSION = '2.2 (Speed & Stability)';
+const APP_VERSION = '2.3 (Registry & Sync Fix)';
 let _TG_ID = '';
 let _TG_USERNAME = '';
 let _EDIT_MODE_DATA = null;
@@ -36,9 +36,11 @@ function handshake() {
     (resp) => {
         if (resp.driverName) {
             // Пользователь существует, обновляем локальные данные
-            localStorage.setItem('driverName', resp.driverName);
+            if (localName !== resp.driverName) {
+                localStorage.setItem('driverName', resp.driverName);
+                document.getElementById('driverNameDisplay').innerText = `Водитель: ${resp.driverName}`;
+            }
             localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(resp.reports || []));
-            document.getElementById('driverNameDisplay').innerText = `Водитель: ${resp.driverName}`;
             initializeApp();
         } else {
             // Новый пользователь
@@ -47,33 +49,45 @@ function handshake() {
     }, 
     (err) => {
          tg.showAlert('Критическая ошибка при инициализации: ' + (err.message || 'Сервер не отвечает.'));
-         console.error(err);
+         // Если сервер упал, но есть кэш - даем работать с ним
+         if (localName) initializeApp();
     });
 }
 
 // --- Загрузка данных и настройка UI ---
 function initializeApp() {
     if (_isInitialized) return;
-    loadReferenceLists(); 
-    loadProjectHistory();
-    loadDraft();
-    updateFormValidationState();
-    _isInitialized = true;
+    
+    // Сначала загружаем справочники, потом все остальное
+    loadReferenceLists(() => {
+        loadProjectHistory();
+        loadDraft();
+        updateFormValidationState();
+        _isInitialized = true;
+    });
 }
 
-function loadReferenceLists() {
+function loadReferenceLists(callback) {
     const cachedLists = localStorage.getItem('referenceLists');
     if (cachedLists) {
-        try { populateLists(JSON.parse(cachedLists)); } catch(e) {}
+        try { 
+            populateLists(JSON.parse(cachedLists)); 
+        } catch(e) {}
     }
+
     callApi('getReferenceLists', null, 
         (freshLists) => {
             populateLists(freshLists);
             localStorage.setItem('referenceLists', JSON.stringify(freshLists));
+            if (callback) callback();
         }, 
         (err) => {
             console.error('Ошибка загрузки справочников:', err.message);
-            if (!cachedLists) tg.showAlert('Не удалось загрузить справочники.');
+            if (!cachedLists) {
+                tg.showAlert('Не удалось загрузить справочники. Функционал может быть ограничен.');
+            }
+            // Вызываем колбэк даже при ошибке, чтобы приложение запустилось
+            if (callback) callback();
         }
     );
 }
